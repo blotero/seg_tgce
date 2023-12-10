@@ -1,9 +1,10 @@
-from enum import Enum
-import numpy as np
-from tensorflow.keras import Model
-import tensorflow as tf
-import gdown
 import os
+from enum import Enum
+
+import gdown
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras import Model
 
 
 def compute_snr(signal: float, noise_std: float) -> float:
