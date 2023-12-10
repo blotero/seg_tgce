@@ -1,11 +1,10 @@
-# type: ignore
 from typing import Any
 
 import tensorflow as tf
 from tf.keras.losses import Loss
 
 
-class TGCE_SS(Loss):
+class TGCE_SS(Loss):  # type: ignore
     def __init__(
         self,
         q: float = 0.1,

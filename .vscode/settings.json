@@ -9,6 +9,7 @@
   "python.formatting.provider": "black",
   "python.linting.enabled": true,
   "python.linting.mypyEnabled": true,
+  "python.analysis.autoImportCompletions": true,
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true
