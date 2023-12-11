@@ -1,3 +1,5 @@
+# pylint: disable=no-name-in-module, import-error, no-member
+
 import os
 from enum import Enum
 
@@ -12,24 +14,24 @@ def compute_snr(signal: float, noise_std: float) -> float:
 
 
 class SnrType(Enum):
-    log = 0
-    linear = 1
+    LOG = 0
+    LINEAR = 1
 
 
 def add_noise_to_layer_weights(
     model: Model,
     layer_num: int,
     noise_snr: float,
-    snr_type: SnrType = SnrType.log,
+    snr_type: SnrType = SnrType.LOG,
     verbose: int = 0,
 ) -> float:
     layer_weights = model.layers[layer_num].get_weights()
 
     sig_power = np.mean(layer_weights[0] ** 2)
 
-    if snr_type == SnrType.log:
+    if snr_type == SnrType.LOG:
         noise_power = sig_power / (10 ** (noise_snr / 10))
-    elif snr_type == SnrType.linear:
+    elif snr_type == SnrType.LINEAR:
         noise_power = sig_power / noise_snr
 
     noise_std = noise_power ** (1 / 2)
@@ -50,14 +52,14 @@ def add_noise_to_layer_weights(
 
 
 def produce_disturbed_models(
-    snr_values: list[int], base_model_path: str, last_conv_encoder_layer: int
+    snr_value_list: list[int], base_model_path: str, layer_to_disturb: int
 ) -> tuple[list[Model], list[float]]:
     snr_measured_values: list[float] = []
     models: list[Model] = []
 
-    for value in snr_values:
+    for value in snr_value_list:
         model_: Model = tf.keras.models.load_model(base_model_path, compile=False)
-        snr = add_noise_to_layer_weights(model_, last_conv_encoder_layer, value)
+        snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
         snr_measured_values.append(snr)
         models.append(model_)
     return models, snr_measured_values
@@ -73,8 +75,7 @@ def download_base_model() -> str:
         if file.endswith(model_extension):
             paths.append(file)
 
-    model_path = paths[0]
-    return model_path
+    return paths[0]
 
 
 def find_last_encoder_conv_layer(model: Model) -> tf.keras.layers:
@@ -85,16 +86,3 @@ def find_last_encoder_conv_layer(model: Model) -> tf.keras.layers:
         if isinstance(layer, tf.keras.layers.UpSampling2D):
             break
     return last_conv_encoder_layer
-
-
-if __name__ == "__main__":
-    snr_values = [10, 5, 2, 0, -5]
-    model_path = download_base_model()
-    model_ann = tf.keras.models.load_model(model_path, compile=False)
-
-    last_conv_encoder_layer = find_last_encoder_conv_layer(model_ann)
-
-    disturbance_models, measured_snr_values = produce_disturbed_models(
-        snr_values, model_path, last_conv_encoder_layer
-    )
-    print(f"Measured snr values: {measured_snr_values}")

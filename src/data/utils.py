@@ -1,13 +1,13 @@
 import tensorflow as tf
 from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet
-from tensorflow.keras import Model
+from tensorflow.keras import Model  # pylint: disable=import-error,no-name-in-module
 
 
 def disturb_mask(model: Model, image: tf.Tensor) -> tf.Tensor:
     return model(image)
 
 
-def mix_channels(mask: tf.Tensor, num_annotators: int) -> tf.Tensor:
+def mix_channels(mask: tf.Tensor) -> tf.Tensor:
     return tf.stack([mask, 1 - mask], axis=-2)
 
 
@@ -15,11 +15,10 @@ def add_noisy_annotators(img: tf.Tensor, models: list[tf.Tensor]) -> tf.Tensor:
     return tf.transpose([disturb_mask(model, img) for model in models], [2, 3, 1, 4, 0])
 
 
-def map_dataset_MA(
+def map_dataset_multiple_annotators(
     dataset: OxfordIiitPet,
-    target_shape: tuple[int],
+    target_shape: tuple[int, int],
     batch_size: int,
-    num_annotators: int,
     disturbance_models: list[Model],
 ) -> tf.Tensor:
     dataset_ = dataset.map(
@@ -60,7 +59,7 @@ def map_dataset_MA(
     )
 
     dataset_ = dataset_.map(
-        lambda img, mask: (img, mix_channels(mask, num_annotators)),
+        lambda img, mask: (img, mix_channels(mask)),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 
