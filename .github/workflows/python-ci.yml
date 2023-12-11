@@ -3,14 +3,12 @@ name: Python CI
 on:
   push:
     branches:
-      - master
-  pull_request:
-    branches:
-      - master
+      - "*"
 
 jobs:
-  test:
+  test-core:
     runs-on: ubuntu-22.04
+    if: github.ref != 'refs/heads/master'
     strategy:
       matrix:
         python-version: [3.11]
@@ -27,17 +25,66 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd core
           python -m pip install --upgrade pip
           pip install -r src/requirements.txt
 
       - name: Run pytest
         run: |
+          cd core
           python -m pytest
 
       - name: Run mypy
         run: |
+          cd core
           python -m mypy src/
 
       - name: Run pylint
         run: |
+          cd core
           python -m pylint src/
+
+  deploy-docs:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: "x64"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r docs/requirements.txt
+
+      - name: Deploy sphinx
+        run: |
+          echo "Deploying docs"
+
+  deploy-app:
+    runs-on: ubuntu-22.04
+    if: github.ref == 'refs/heads/master'
+    strategy:
+      matrix:
+        python-version: [3.11]
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: "x64"
+
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies"
+
+      - name: Deploy app
+        run: |
+          echo "Deploying app"
