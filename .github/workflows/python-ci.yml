@@ -6,9 +6,15 @@ on:
       - "*"
 
 jobs:
-  test:
+  test-core:
     runs-on: ubuntu-22.04
-    if: github.ref != 'refs/heads/master'
+    if: |
+      github.ref != 'refs/heads/master' && 
+      (
+        startsWith(github.event.head_commit.message, 'core') ||
+        startsWith(github.event.head_commit.message, 'all')
+      )
+
     strategy:
       matrix:
         python-version: [3.11]
@@ -34,9 +40,14 @@ jobs:
           cd core
           python -m pytest
 
-  lint:
+  lint-core:
     runs-on: ubuntu-22.04
-    if: github.ref != 'refs/heads/master'
+    if: |
+      github.ref != 'refs/heads/master' && 
+      (
+        startsWith(github.event.head_commit.message, 'core') ||
+        startsWith(github.event.head_commit.message, 'all')
+      )
     strategy:
       matrix:
         python-version: [3.11]
@@ -68,7 +79,12 @@ jobs:
 
   deploy-docs:
     runs-on: ubuntu-22.04
-    if: github.ref == 'refs/heads/master'
+    if: |
+      github.ref == 'refs/heads/master' && 
+      (
+        startsWith(github.event.head_commit.message, 'docs') ||
+        startsWith(github.event.head_commit.message, 'all')
+      )
     strategy:
       matrix:
         python-version: [3.11]
@@ -90,7 +106,12 @@ jobs:
 
   deploy-app:
     runs-on: ubuntu-22.04
-    if: github.ref == 'refs/heads/master'
+    if: |
+      github.ref == 'refs/heads/master' && 
+      (
+        startsWith(github.event.head_commit.message, 'app') ||
+        startsWith(github.event.head_commit.message, 'all')
+      )
     strategy:
       matrix:
         python-version: [3.11]
