@@ -13,7 +13,7 @@ author = 'Brandon Lotero'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = []
+extensions = ['sphinx_wagtail_theme']
 
 templates_path = ['_templates']
 exclude_patterns = []
@@ -22,6 +22,9 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+# include the theme in the list of extensions to be loaded
 
-html_theme = 'alabaster'
+# select the theme
+html_theme = 'sphinx_wagtail_theme'
+
 html_static_path = ['_static']
