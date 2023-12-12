@@ -4,9 +4,7 @@ This repository contains the train, data mocking and usage procedures
 for handling the multiple annotators segmentation problem researched by the
 GCPDS (2023).
 
-# Chained deep learning using generalized cross entropy for
-
-multiple annotators segmentation
+# Chained deep learning using generalized cross entropy for multiple annotators segmentation
 
 ## Loss functions for segmentation in deep learning
 
@@ -59,3 +57,5 @@ $$
 \frac{1}{N} \sum_{n}^NTGCE_{SS}(\mathbf{Y}_r[n],f(\mathbf X[n];\theta) |
 \mathbf{\Lambda}_r (\mathbf X[n];\theta))
 $$
+
+Further documentation available at: https://seg-tgce.readthedocs.io/en/latest/
