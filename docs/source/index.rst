@@ -8,9 +8,8 @@ Semantic Segmentation TCGE Framework
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-
+   contribution
 
 Indices and tables
 ==================
