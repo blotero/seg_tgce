@@ -6,18 +6,18 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'semantic-segmentation-tgce'
-copyright = '2023, Brandon Lotero'
-author = 'Brandon Lotero'
+project = "semantic-segmentation-tgce"
+copyright = "2023, Brandon Lotero"
+author = "Brandon Lotero"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx_wagtail_theme']
+extensions = [
+    "sphinx_wagtail_theme", 
+]
 
-templates_path = ['_templates']
-exclude_patterns = []
-
+templates_path = ["_templates"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -25,6 +25,9 @@ exclude_patterns = []
 # include the theme in the list of extensions to be loaded
 
 # select the theme
-html_theme = 'sphinx_wagtail_theme'
+html_theme = "sphinx_wagtail_theme"
 
-html_static_path = ['_static']
+html_static_path = ["_static"]
+
+highlight_language = 'bash'
+
