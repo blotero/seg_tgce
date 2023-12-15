@@ -77,10 +77,10 @@ jobs:
           cd core
           python -m pylint src/
 
-  deploy-docs:
+  lint-docs:
     runs-on: ubuntu-22.04
     if: |
-      github.ref == 'refs/heads/master' && 
+      github.ref != 'refs/heads/master' && 
       (
         startsWith(github.event.head_commit.message, 'docs') ||
         startsWith(github.event.head_commit.message, 'all')
@@ -90,43 +90,18 @@ jobs:
         python-version: [3.11]
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Set up Python
         uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
           architecture: "x64"
 
-      - name: Install dependencies
+      - name: Verify docs quality
         run: |
-          echo "Installing dependencies"
-
-      - name: Deploy sphinx
-        run: |
-          echo "Deploying docs"
-
-  deploy-app:
-    runs-on: ubuntu-22.04
-    if: |
-      github.ref == 'refs/heads/master' && 
-      (
-        startsWith(github.event.head_commit.message, 'app') ||
-        startsWith(github.event.head_commit.message, 'all')
-      )
-    strategy:
-      matrix:
-        python-version: [3.11]
-
-    steps:
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: "x64"
-
-      - name: Install dependencies
-        run: |
-          echo "Installing dependencies"
-
-      - name: Deploy app
-        run: |
-          echo "Deploying app"
+          cd docs
+          pip install -r requirements.txt
+          rstcheck -r source
+          make html
