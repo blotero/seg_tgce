@@ -9,9 +9,9 @@
   "python.formatting.provider": "black",
   "python.linting.enabled": true,
   "python.linting.mypyEnabled": true,
-  "python.linting.pylintEnabled": true,
-  "python.linting.pylintPath": ".env/bin/pylint",
-  "python.linting.mypyPath": ".env/bin/mypy",
+  "python.linting.pylintEnabled": false,
+  "python.linting.pylintPath": "core/.env/bin/pylint",
+  "python.linting.mypyPath": "core/.env/bin/mypy",
   "python.linting.mypyArgs": ["--config-file", "./mypy.ini"],
   "python.analysis.autoImportCompletions": true,
   "[json]": {

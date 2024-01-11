@@ -38,7 +38,7 @@ class TcgeSs(Loss):  # type: ignore
         """
         Calls loss function itself.
         """
-        lambda_r = y_pred[..., self.num_classes :]
+        lambda_r = y_pred[..., self.num_classes:]
         y_pred_ = y_pred[..., : self.num_classes]
         n_samples, width, height, _ = y_pred_.shape
         y_pred_ = y_pred_[..., tf.newaxis]

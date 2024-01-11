@@ -3,6 +3,7 @@ annotated-types==0.6.0
 array-record==0.5.0
 astroid==3.0.1
 astunparse==1.6.3
+autopep8==2.0.4
 beautifulsoup4==4.12.2
 black==23.11.0
 cachetools==5.3.2
@@ -49,6 +50,18 @@ mypy==1.7.1
 mypy-extensions==1.0.0
 networkx==3.2.1
 numpy==1.26.2
+nvidia-cublas-cu12==12.2.5.6
+nvidia-cuda-cupti-cu12==12.2.142
+nvidia-cuda-nvcc-cu12==12.2.140
+nvidia-cuda-nvrtc-cu12==12.2.140
+nvidia-cuda-runtime-cu12==12.2.140
+nvidia-cudnn-cu12==8.9.4.25
+nvidia-cufft-cu12==11.0.8.103
+nvidia-curand-cu12==10.3.3.141
+nvidia-cusolver-cu12==11.5.2.141
+nvidia-cusparse-cu12==12.1.2.141
+nvidia-nccl-cu12==2.16.5
+nvidia-nvjitlink-cu12==12.2.140
 oauthlib==3.2.2
 opencv-python==4.8.1.78
 opt-einsum==3.3.0
@@ -66,6 +79,7 @@ protobuf==3.20.3
 psutil==5.9.6
 pyasn1==0.5.1
 pyasn1-modules==0.3.0
+pycodestyle==2.11.1
 pydantic==2.5.2
 pydantic_core==2.14.5
 pylint==3.0.2
