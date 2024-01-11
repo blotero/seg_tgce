@@ -58,7 +58,8 @@ def produce_disturbed_models(
     models: list[Model] = []
 
     for value in snr_value_list:
-        model_: Model = tf.keras.models.load_model(base_model_path, compile=False)
+        model_: Model = tf.keras.models.load_model(
+            base_model_path, compile=False)
         snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
         snr_measured_values.append(snr)
         models.append(model_)
