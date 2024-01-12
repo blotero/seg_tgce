@@ -1,6 +1,7 @@
 # pylint: disable=import-error,no-name-in-module
 from typing import Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -15,7 +16,7 @@ from .semantic_segmentation import (
 )
 
 MNIST_TARGET_IMG_SHAPE = 128, 128
-NUM_EPOCHS = 400
+NUM_EPOCHS = 800
 NUM_MNIST_CLASSES = 5
 
 
@@ -72,7 +73,7 @@ def load() -> (
     return x_train, y_train, x_test, y_test
 
 
-def train_base_model() -> keras.Model:
+def train_base_model() -> keras.callbacks.History:
     config = SegmentationDatasetConfig(
         num_train_samples=100,
         num_test_samples=10,
@@ -96,9 +97,12 @@ def train_base_model() -> keras.Model:
         optimizer="adam",
     )
     print(unet_model.summary())
-    unet_model.fit(x=x_train, y=y_train, epochs=NUM_EPOCHS)
-    return unet_model
+    history = unet_model.fit(x=x_train, y=y_train, epochs=NUM_EPOCHS)
+    return history
 
 
 if __name__ == "__main__":
-    train_base_model()
+    train_history = train_base_model()
+    plt.figure()
+    plt.plot(train_history.history["loss"])
+    plt.show()
