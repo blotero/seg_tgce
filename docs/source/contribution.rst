@@ -69,3 +69,16 @@ Also, you can locally build doc pages with:
 .. code-block:: bash
 
    make html
+
+   
+Notebooks
+---------
+
+
+For setting up a local jupyter notebook, run the following (inside your venv):
+
+.. code-block:: bash
+
+    python -m ipykernel install --user --name=seg_tgce_env
+    
+Then, open jupyter lab and select the created kern
