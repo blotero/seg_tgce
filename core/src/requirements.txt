@@ -29,7 +29,7 @@ fonttools==4.46.0
 fsspec==2023.12.1
 gast==0.5.4
 gcpds-image-segmentation @ git+https://github.com/UN-GCPDS/python-gcpds.image_segmentation.git@2263536d47a757e71ca0bc62127a1ec22943d762
-gdown==4.7.1
+gdown==4.6.3
 google-auth==2.25.2
 google-auth-oauthlib==1.1.0
 google-pasta==0.2.0

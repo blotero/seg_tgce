@@ -67,8 +67,8 @@ def produce_disturbed_models(
 
 
 def download_base_model() -> str:
-    model_url = "https://drive.google.com/uc?id=1x39L3QNDMye1SJhKh1gf4YS-HRFLTs6G"
-    gdown.download(model_url)
+    model_file_id = "1x39L3QNDMye1SJhKh1gf4YS-HRFLTs6G"
+    gdown.download(id=model_file_id, quiet=False)
     model_extension = "keras"
     paths = []
 
