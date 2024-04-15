@@ -1,6 +1,6 @@
 import tensorflow as tf
-from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet
-from tensorflow.keras import Model  # pylint: disable=import-error,no-name-in-module
+from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet  # type:ignore
+from keras.models import Model  # type:ignore
 
 
 def disturb_mask(model: Model, image: tf.Tensor) -> tf.Tensor:

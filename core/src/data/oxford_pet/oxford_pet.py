@@ -1,6 +1,6 @@
 import tensorflow as tf
 from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet
-from tensorflow.keras import Model  # pylint: disable=import-error,no-name-in-module
+from keras.models import Model
 
 from data.utils import map_dataset_multiple_annotators
 

@@ -1,15 +1,16 @@
-# pylint: disable=no-name-in-module, import-error, no-member
 
 import os
 from enum import Enum
 
-import gdown
+import gdown  # type:ignore
 import numpy as np
-import tensorflow as tf
-from tensorflow.keras import Model
+from keras.models import Model, load_model
+from keras.layers import Layer
+from keras.layers import Conv2D
+from keras.layers import UpSampling2D
 
 
-def compute_snr(signal: float, noise_std: float) -> float:
+def compute_snr(signal: float | np.ndarray, noise_std: float) -> float:
     return float(10 * np.log10(np.mean(signal**2) / noise_std**2))
 
 
@@ -58,7 +59,7 @@ def produce_disturbed_models(
     models: list[Model] = []
 
     for value in snr_value_list:
-        model_: Model = tf.keras.models.load_model(
+        model_: Model = load_model(
             base_model_path, compile=False)
         snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
         snr_measured_values.append(snr)
@@ -79,11 +80,11 @@ def download_base_model() -> str:
     return paths[0]
 
 
-def find_last_encoder_conv_layer(model: Model) -> tf.keras.layers:
+def find_last_encoder_conv_layer(model: Model) -> Layer:
     last_conv_encoder_layer = 0
     for i, layer in enumerate(model.layers):
-        if isinstance(layer, tf.keras.layers.Conv2D):
+        if isinstance(layer, Conv2D):
             last_conv_encoder_layer = i
-        if isinstance(layer, tf.keras.layers.UpSampling2D):
+        if isinstance(layer, UpSampling2D):
             break
     return last_conv_encoder_layer

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import tensorflow as tf
-from tf.keras.losses import Loss  # pylint: disable=import-error
+from keras.losses import Loss
 
 
 @dataclass
@@ -38,10 +38,10 @@ class TcgeSs(Loss):  # type: ignore
         """
         Calls loss function itself.
         """
-        lambda_r = y_pred[..., self.num_classes:]
-        y_pred_ = y_pred[..., : self.num_classes]
+        lambda_r = y_pred[..., self.num_classes:]  # type:ignore
+        y_pred_ = y_pred[..., : self.num_classes]  # type:ignore
         n_samples, width, height, _ = y_pred_.shape
-        y_pred_ = y_pred_[..., tf.newaxis]
+        y_pred_ = y_pred_[..., tf.newaxis]  # type:ignore
         y_pred_ = tf.repeat(y_pred_, repeats=[self.num_annotators], axis=-1)
 
         epsilon = 1e-8
