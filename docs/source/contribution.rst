@@ -30,10 +30,18 @@ Also, use pylint and mypy for linting code:
 
 .. code-block:: bash
 
-    pylint src/
-    mypy src/
+    pylint .
+    mypy .
 
 Pylint should score your code 10/10 and mypy should find no issues.
+
+Additionally, for formatting code, you can use isort and black:
+
+.. code-block:: bash
+
+    black .
+    isort .
+
 
 Docs
 ----

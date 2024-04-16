@@ -27,3 +27,6 @@ force_grid_wrap = 0
 line_length = 88
 profile = "black"
 skip = [".env/"]
+
+[tool.black]
+exclude = ".env/"
