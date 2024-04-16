@@ -1,23 +1,42 @@
+from typing import Tuple
+
 import tensorflow as tf
-from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet  # type:ignore
-from keras.models import Model  # type:ignore
+from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet
+from keras.models import Model
 
 
-def disturb_mask(model: Model, image: tf.Tensor) -> tf.Tensor:
-    return model(image)
+def disturb_mask(
+    model: Model,
+    image: tf.Tensor,
+    model_shape: Tuple[int, int],
+    target_shape: Tuple[int, int],
+):
+    return tf.image.resize(model(tf.image.resize(image, model_shape)), target_shape)
 
 
 def mix_channels(mask: tf.Tensor) -> tf.Tensor:
     return tf.stack([mask, 1 - mask], axis=-2)
 
 
-def add_noisy_annotators(img: tf.Tensor, models: list[tf.Tensor]) -> tf.Tensor:
-    return tf.transpose([disturb_mask(model, img) for model in models], [2, 3, 1, 4, 0])
+def add_noisy_annotators(
+    img: tf.Tensor,
+    models: list[tf.Tensor],
+    model_shape: Tuple[int, int],
+    target_shape: Tuple[int, int],
+) -> tf.Tensor:
+    return tf.transpose(
+        [
+            disturb_mask(model, img, model_shape=model_shape, target_shape=target_shape)
+            for model in models
+        ],
+        [2, 3, 1, 4, 0],
+    )
 
 
 def map_dataset_multiple_annotators(
     dataset: OxfordIiitPet,
     target_shape: tuple[int, int],
+    model_shape: tuple[int, int],
     batch_size: int,
     disturbance_models: list[Model],
 ) -> tf.Tensor:
@@ -36,16 +55,13 @@ def map_dataset_multiple_annotators(
 
     dataset_ = dataset_.map(
         lambda img, mask: (
-            tf.image.resize(img, target_shape),
-            tf.image.resize(mask, target_shape),
-        ),
-        num_parallel_calls=tf.data.AUTOTUNE,
-    )
-
-    dataset_ = dataset_.map(
-        lambda img, mask: (
             img,
-            add_noisy_annotators(tf.expand_dims(img, 0), disturbance_models),
+            add_noisy_annotators(
+                tf.expand_dims(img, 0),
+                disturbance_models,
+                model_shape=model_shape,
+                target_shape=target_shape,
+            ),
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )

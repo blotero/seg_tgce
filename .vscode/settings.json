@@ -13,5 +13,6 @@
       "source.organizeImports": "explicit"
     }
   },
-  "isort.args": ["--profile", "black"]
+  "isort.args": ["--profile", "black"],
+  "isort.path": ["~/.env/python", "-m", "isort"]
 }

@@ -4,6 +4,8 @@ from keras.models import Model
 
 from data.utils import map_dataset_multiple_annotators
 
+MODEL_ORIGINAL_SHAPE = (256, 256)
+
 
 def get_data_multiple_annotators(
     annotation_models: list[Model],
@@ -12,13 +14,14 @@ def get_data_multiple_annotators(
 ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
     dataset = OxfordIiitPet()
     train_dataset, val_dataset, test_dataset = dataset()
-    train_data = map_dataset_multiple_annotators(
-        train_dataset, target_shape, batch_size, annotation_models
-    )
-    val_data = map_dataset_multiple_annotators(
-        val_dataset, target_shape, batch_size, annotation_models
-    )
-    test_data = map_dataset_multiple_annotators(
-        test_dataset, target_shape, batch_size, annotation_models
+    train_data, val_data, test_data = (
+        map_dataset_multiple_annotators(
+            dataset=data,
+            target_shape=target_shape,
+            model_shape=MODEL_ORIGINAL_SHAPE,
+            batch_size=batch_size,
+            disturbance_models=annotation_models,
+        )
+        for data in (train_dataset, val_dataset, test_dataset)
     )
     return train_data, val_data, test_data
