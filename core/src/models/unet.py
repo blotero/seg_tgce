@@ -10,7 +10,7 @@ from keras.layers import (
     UpSampling2D,
 )
 
-from models.ma_model import ModelMultipleAnnotators
+from .ma_model import ModelMultipleAnnotators
 
 DefaultConv2D = partial(Conv2D, kernel_size=3, activation="relu", padding="same")
 

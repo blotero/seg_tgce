@@ -33,7 +33,7 @@ class Runner(ABC):
 
     @abstractmethod
     def __init__(self, params: RunningSessionParams) -> None:
-        self.params = params
+        pass
 
     @abstractmethod
     async def stop(self) -> SessionPartialResults:

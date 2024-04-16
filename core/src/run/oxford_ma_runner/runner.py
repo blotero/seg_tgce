@@ -40,7 +40,7 @@ def fetch_models(noise_levels_snr: list[float]):
 
 class OxfordMARunner(Runner):
     def __init__(self, params: RunningSessionParams) -> None:
-        super(params)
+        self.params = params
 
     async def run(  # pylint: disable=too-many-locals, too-many-statements
         self,
