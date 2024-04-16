@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+import keras.backend as K
 import tensorflow as tf
 from keras.losses import Loss
 
@@ -13,6 +14,20 @@ class TcgeConfig:
 
     num_annotators: int = 5
     num_classes: int = 2
+    gamma: float = 0.1
+
+
+def binary_entropy(target, pred):
+    """
+    Adds binary entropy to the loss.
+    """
+    pred_probs = tf.sigmoid(pred)
+    hadamard_product = target * pred_probs
+    epsilon = 1e-12
+    entropy = -hadamard_product * K.log(hadamard_product + epsilon) - (
+        1 - hadamard_product
+    ) * K.log(1 - hadamard_product + epsilon)
+    return K.mean(entropy)
 
 
 class TcgeSs(Loss):  # type: ignore
@@ -32,13 +47,14 @@ class TcgeSs(Loss):  # type: ignore
         self.num_annotators = config.num_annotators
         self.num_classes = config.num_classes
         self.smooth = smooth
+        self.gamma = config.gamma
         super().__init__(name=name)
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
         """
         Calls loss function itself.
         """
-        lambda_r = y_pred[..., self.num_classes:]  # type:ignore
+        lambda_r = y_pred[..., self.num_classes :]  # type:ignore
         y_pred_ = y_pred[..., : self.num_classes]  # type:ignore
         n_samples, width, height, _ = y_pred_.shape
         y_pred_ = y_pred_[..., tf.newaxis]  # type:ignore
@@ -80,8 +96,9 @@ class TcgeSs(Loss):  # type: ignore
         )
 
         loss = tf.math.reduce_mean(tf.math.multiply(lambda_r, term_r) + term_c)
-        if tf.math.is_nan(loss):
-            loss = tf.where(tf.math.is_nan(loss), tf.constant(0.0), loss)
+        loss = tf.where(tf.math.is_nan(loss), tf.constant(0.0), loss)
+        entropy_term = binary_entropy(y_true, y_pred_)
+        loss = tf.math.add(loss, self.gamma * entropy_term)
         return loss
 
     def get_config(

@@ -12,6 +12,7 @@ class RunningSessionParams:
     batch_size: int
     num_annotators: int
     extra: dict[str, Any] | None
+    plotting_frequency: int = 10
 
 
 @dataclass
