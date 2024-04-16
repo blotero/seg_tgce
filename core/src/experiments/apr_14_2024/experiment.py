@@ -10,7 +10,10 @@ runner = OxfordMARunner(
         target_img_shape=(64, 64),
         batch_size=32,
         num_annotators=4,
-        extra={"annotators_noise_levels": [20, 10, 0, -10]},
+        extra={
+            "noise_levels_snr": [20, 10, 0, -10],
+            "entropy_gamma_values": [1e-6, 1e-3, 1e-1],
+        },
     )
 )
 
@@ -27,5 +30,4 @@ async def main():
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
