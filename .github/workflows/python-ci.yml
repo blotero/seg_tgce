@@ -33,7 +33,7 @@ jobs:
         run: |
           cd core
           python -m pip install --upgrade pip
-          pip install -r src/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run pytest
         run: |
@@ -65,17 +65,17 @@ jobs:
         run: |
           cd core
           python -m pip install --upgrade pip
-          pip install -r src/requirements.txt
+          pip install -r requirements.txt
 
       - name: Run mypy
         run: |
           cd core
-          python -m mypy src/
+          python -m mypy .
 
       - name: Run pylint
         run: |
           cd core
-          python -m pylint src/
+          python -m pylint .
 
   lint-docs:
     runs-on: ubuntu-22.04

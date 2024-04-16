@@ -3,21 +3,21 @@ import tensorflow as tf
 from keras.models import load_model
 from keras.optimizers import Adam
 
-from data.oxford_pet.disturbance.model import (
+from core.seg_tgce.data.oxford_pet.disturbance.model import (
     download_base_model,
     find_last_encoder_conv_layer,
     produce_disturbed_models,
 )
-from data.oxford_pet.oxford_pet import get_data_multiple_annotators
-from loss.tgce import TcgeConfig, TcgeSs
-from metrics.dice_coefficient import DiceCoefficient
-from models.unet import unet_tgce
-from run.oxford_ma_runner.model_result import ModelResult
-from run.oxford_ma_runner.plotting import (
+from core.seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
+from core.seg_tgce.loss.tgce import TcgeConfig, TcgeSs
+from core.seg_tgce.metrics.dice_coefficient import DiceCoefficient
+from core.seg_tgce.models.unet import unet_tgce
+from core.seg_tgce.run.oxford_ma_runner.model_result import ModelResult
+from core.seg_tgce.run.oxford_ma_runner.plotting import (
     epoch_progress_plotter,
     plot_losses_and_metrics,
 )
-from run.runner import (
+from core.seg_tgce.run.runner import (
     Runner,
     RunningSessionParams,
     SessionPartialResults,

@@ -1,23 +1,24 @@
-[project]
+[tool.poetry]
 name = "seg_tgce"
 version = "0.0.1"
-authors = [{ name = "Brandon Lotero", email = "blotero@gmail.com" }]
+authors = ["Brandon Lotero <blotero@gmail.com>"]
 description = "A package for the SEG TGCE project"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: Linux",
 ]
+homepage = "https://github.com/blotero/seg_tgce"
+repository = "https://github.com/blotero/seg_tgce"
 
-[project.urls]
-Homepage = "https://github.com/blotero/seg_tgce"
-Issues = "https://github.com/blotero/seg_tgce/issues"
+
+[tool.poetry.dependencies]
+python = "^3.11"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 multi_line_output = 3
@@ -25,3 +26,4 @@ include_trailing_comma = true
 force_grid_wrap = 0
 line_length = 88
 profile = "black"
+skip = [".env/"]
