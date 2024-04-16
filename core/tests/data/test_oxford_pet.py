@@ -1,7 +1,10 @@
-from keras.models import load_model
-
-from data.oxford_pet.disturbance.model import download_base_model, find_last_encoder_conv_layer, produce_disturbed_models
+from data.oxford_pet.disturbance.model import (
+    download_base_model,
+    find_last_encoder_conv_layer,
+    produce_disturbed_models,
+)
 from data.oxford_pet.oxford_pet import get_data_multiple_annotators
+from keras.models import load_model
 
 
 def test_oxford_pet_flow() -> None:

@@ -7,9 +7,7 @@ from data.oxford_pet.disturbance.model import download_base_model, find_last_enc
 def test_disturbance() -> None:
     snr_values = [10, 5, 2, 0, -5]
     model_path = download_base_model()
-    model_ann = tf.keras.models.load_model(  # pylint: disable=no-member
-        model_path, compile=False
-    )
+    model_ann = load_model(model_path, compile=False)
 
     encoder_layer_to_disturb = find_last_encoder_conv_layer(model_ann)
 

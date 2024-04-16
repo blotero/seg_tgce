@@ -1,3 +1,4 @@
+import asyncio
 import signal
 
 from run.oxford_ma_runner.runner import OxfordMARunner
@@ -23,3 +24,8 @@ async def main():
     signal.signal(signal.SIGINT, interruption_handler)
     results = await runner.run()
     print(results)
+
+
+if __name__ == "__main__":
+
+    asyncio.run(main())

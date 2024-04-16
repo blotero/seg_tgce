@@ -53,8 +53,7 @@ def map_dataset_multiple_annotators(
     dataset_ = dataset_.map(
         lambda img, mask: (
             img,
-            tf.reshape(
-                mask, (mask.shape[0], mask.shape[1], 1, mask.shape[-1])),
+            tf.reshape(mask, (mask.shape[0], mask.shape[1], 1, mask.shape[-1])),
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )

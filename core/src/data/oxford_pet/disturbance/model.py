@@ -1,13 +1,10 @@
-
 import os
 from enum import Enum
 
 import gdown  # type:ignore
 import numpy as np
+from keras.layers import Conv2D, Layer, UpSampling2D
 from keras.models import Model, load_model
-from keras.layers import Layer
-from keras.layers import Conv2D
-from keras.layers import UpSampling2D
 
 
 def compute_snr(signal: float | np.ndarray, noise_std: float) -> float:
@@ -53,14 +50,13 @@ def add_noise_to_layer_weights(
 
 
 def produce_disturbed_models(
-    snr_value_list: list[int], base_model_path: str, layer_to_disturb: int
+    snr_value_list: list[float], base_model_path: str, layer_to_disturb: int
 ) -> tuple[list[Model], list[float]]:
     snr_measured_values: list[float] = []
     models: list[Model] = []
 
     for value in snr_value_list:
-        model_: Model = load_model(
-            base_model_path, compile=False)
+        model_: Model = load_model(base_model_path, compile=False)
         snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
         snr_measured_values.append(snr)
         models.append(model_)
