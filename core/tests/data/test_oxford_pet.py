@@ -1,14 +1,15 @@
-from data.oxford_pet.disturbance.model import (
+from keras.models import load_model
+
+from core.seg_tgce.data.oxford_pet.disturbance.model import (
     download_base_model,
     find_last_encoder_conv_layer,
     produce_disturbed_models,
 )
-from data.oxford_pet.oxford_pet import get_data_multiple_annotators
-from keras.models import load_model
+from core.seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
 
 
 def test_oxford_pet_flow() -> None:
-    snr_values = [10, 5, 2, 0, -5]
+    snr_values = [10.0, 5.0, 2.0, 0.0, -5.0]
     model_path = download_base_model()
     model_ann = load_model(model_path, compile=False)
 

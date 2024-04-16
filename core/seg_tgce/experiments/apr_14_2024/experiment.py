@@ -1,8 +1,8 @@
 import asyncio
 import signal
 
-from run.oxford_ma_runner.runner import OxfordMARunner
-from run.runner import RunningSessionParams
+from core.seg_tgce.run.oxford_ma_runner.runner import OxfordMARunner
+from core.seg_tgce.run.runner import RunningSessionParams
 
 runner = OxfordMARunner(
     params=RunningSessionParams(
