@@ -7,7 +7,7 @@ from run.runner import RunningSessionParams
 runner = OxfordMARunner(
     params=RunningSessionParams(
         n_epochs=50,
-        target_img_shape=(64, 64),
+        target_img_shape=(256, 256),
         batch_size=32,
         num_annotators=4,
         extra={
