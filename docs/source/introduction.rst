@@ -13,6 +13,7 @@ correspond to different objects or parts of objects.
 .. image:: resources/usual-segmentation.png
   :width: 400
   :alt: An example on how image segmentation resulting labels look like.
+  :align: center
 
 
 What does multiple annotators mean?
