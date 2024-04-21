@@ -89,4 +89,4 @@ For setting up a local jupyter notebook, run the following (inside your venv):
 
     python -m ipykernel install --user --name=seg_tgce_env
     
-Then, open jupyter lab and select the created kern
+Then, open jupyter lab and select the created kernel.
