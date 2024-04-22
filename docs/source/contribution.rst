@@ -53,8 +53,8 @@ documentation pages.
 Development environment
 =======================
 
-Please setup your development environment with ``venv`` for python 3.11 as
-follows
+Please setup your development environment with ``venv`` for python 3.11
+as follows
 
 .. code:: bash
 
@@ -78,8 +78,6 @@ Also, you can locally build doc pages with:
 .. code:: bash
 
    make html
-   
-
 
 Besides, if you want to apply formatting to your docs, you can use
 ``rstfmt``:
