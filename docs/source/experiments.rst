@@ -23,9 +23,8 @@ and easily retriable format, available at the following link:
 
 https://github.com/UN-GCPDS/python-gcpds.image_segmentation
 
-*******************
- Scorers emulation
-*******************
+Scorers emulation
+=================
 
 On itself, the Oxford-IIIT Pet dataset contains the masks which reffer
 to the ground truth and not to labels from different annotators, which
@@ -51,3 +50,13 @@ students.
 This dataset fairly represents the original intention of the project,
 which is to provide a tool for pathologists to segment histopathological
 images.
+
+The dataset is conformed by several histology patches of size 512x512
+px. Masks labels exits for an expert pathologist and 20 medical
+students. Every single patch contains label for every annotator as shown
+in the figure:
+
+.. image:: resources/crowd-seg-example-instances.png
+   :width: 100%
+   :align: center
+   :alt: Different labeling instances for three different patches of the CrowdSeg dataset.
