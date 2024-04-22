@@ -5,6 +5,7 @@ author = "Brandon Lotero"
 
 extensions = [
     "sphinx_rtd_theme",
+    'sphinx.ext.mathjax',
 ]
 
 templates_path = ["_templates"]
