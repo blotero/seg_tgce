@@ -1,93 +1,103 @@
-Contribution
-============
+##############
+ Contribution
+##############
 
+If you want to contribute to this project, please consider the following
+practices according to your contribution target.
 
-If you want to contribute to this project, please consider the following practices
-according to your contribution target.
+******
+ Core
+******
 
+The ``core/`` directory contains all functionalities for training and
+running the semantic segmentation model. Core behaves like a python
+module. For contributing to this section, first setup your development
+environment as follows:
 
-Core
-----
-The ``core/`` directory contains all functionalities for training and running the
-semantic segmentation model. Core behaves like a python module. 
-For contributing to this section, first setup your development environment as follows:
+.. code:: bash
 
-.. code-block:: bash
-
-    cd core/
-    python -m venv .env
-    source .env/bin/activate
-    pip install -r requirements.txt
-    
+   cd core/
+   python -m venv .env
+   source .env/bin/activate
+   pip install -r requirements.txt
 
 When refactoring or adding new features, run tests locally with:
 
-.. code-block:: bash
+.. code:: bash
 
-    pytest .
-    
-Also, use pylint and mypy for linting code:
+   pytest .
 
-.. code-block:: bash
+Also, use ``pylint`` and ``mypy`` for linting code:
 
-    pylint .
-    mypy .
+.. code:: bash
+
+   pylint .
+   mypy .
 
 Pylint should score your code 10/10 and mypy should find no issues.
 
-Additionally, for formatting code, you can use isort and black:
+Additionally, for formatting code, you can use ``isort`` and ``black``:
 
-.. code-block:: bash
+.. code:: bash
 
-    black .
-    isort .
+   black .
+   isort .
 
+******
+ Docs
+******
 
-Docs
-----
-The ``docs/`` directory contains all source files for generating these documentation
-pages.
-
+The ``docs/`` directory contains all source files for generating these
+documentation pages.
 
 Development environment
-^^^^^^^^^^^^^^^^^^^^^^^
-Please setup your development environment with venv for python 3.11 as follows
+=======================
 
+Please setup your development environment with ``venv`` for python 3.11 as
+follows
 
-.. code-block:: bash
+.. code:: bash
 
-    cd docs/
-    python -m venv .env
-    source .env/bin/activate
-    pip install -r requirements.txt
-    
+   cd docs/
+   python -m venv .env
+   source .env/bin/activate
+   pip install -r requirements.txt
 
-Once your venv is ready, you can lint your pages after adding new content as follows:
+Once your ``venv`` is ready, you can lint your pages after adding new
+content as follows:
 
-.. code-block:: bash
+.. code:: bash
 
-    rstcheck -r source/
-    
-If your docs sources are right, you should find an output like the following:
-``Success! No issues detected.``
+   rstcheck -r source/
 
+If your docs sources are right, you should find an output like the
+following: ``Success! No issues detected.``
 
 Also, you can locally build doc pages with:
 
-.. code-block:: bash
+.. code:: bash
 
    make html
-
    
-Notebooks
----------
 
 
-For setting up a local jupyter notebook, run the following (inside your venv):
+Besides, if you want to apply formatting to your docs, you can use
+``rstfmt``:
 
-.. code-block:: bash
+.. code:: bash
 
-    python -m ipykernel install --user --name=seg_tgce_env
-    
-Then, open your preference tool (jupyter lab, vscode viewer, etc) 
-and select the created kernel.
+   rstfmt -r source/
+
+***********
+ Notebooks
+***********
+
+For setting up a local jupyter notebook, run the following (inside your
+venv):
+
+.. code:: bash
+
+   python -m ipykernel install --user --name=seg_tgce_env
+
+Then, open your preference tool (jupyter lab, vscode viewer, etc) and
+select the created kernel.
