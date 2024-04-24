@@ -1,3 +1,3 @@
 [MASTER]
-disable = missing-module-docstring,missing-function-docstring,missing-class-docstring
+disable = missing-module-docstring,missing-function-docstring,missing-class-docstring,redefined-outer-name
 init-hook='import sys; sys.path.append("core")'
