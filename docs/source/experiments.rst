@@ -60,3 +60,40 @@ in the figure:
    :width: 100%
    :align: center
    :alt: Different labeling instances for three different patches of the CrowdSeg dataset.
+
+Loading the dataset
+===================
+
+If you already have a downloaded dataset in a certain directory, you can
+load it symply as a keras sequence with the ``ImageDataGenerator``
+class:
+
+.. code:: python
+
+   from seg_tgce.data.crowd_seg import ImageDataGenerator
+
+   val_gen = ImageDataGenerator(
+      image_dir="<path to your dataset root>/Histology Data/patches/Val",
+      mask_dir="<path to your dataset root>/Histology Data/masks/Val",
+      batch_size=16,
+      n_classes=6,
+    )
+   print(f"Train len: {len(val_gen)}")
+   print(f"Train masks scorers: {val_gen.n_scorers}")
+   print(f"Train masks scorers tags: {val_gen.scorers_tags}")
+   val_gen.visualize_sample(
+     batch_index=8,
+     sample_index=8,
+     scorers=["NP8", "NP16", "NP21", "expert"],
+   )
+
+The ``ImageDataGenerator`` class is a subclass of the Keras ``Sequence``
+class, which allows us to load the dataset in a lazy way. When running
+the ``visualize_sample`` method, the generator will load the images and
+masks from the disk and display them., with a result similar to the
+following
+
+.. image:: resources/crowd-seg-generator-visualization.png
+   :width: 100%
+   :align: center
+   :alt: sample from the CrowdSeg dataset with the ``ImageDataGenerator`` class.
