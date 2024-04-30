@@ -1,14 +1,15 @@
 import os
-from typing import List, Tuple
+from typing import Tuple
+
 import matplotlib.pyplot as plt
-import cv2
+from cv2 import imread  # pylint: disable=no-name-in-module
 
 
 class BaseDirectoryNotFoundError(Exception):
     pass
 
 
-def visualize_data(
+def visualize_data(  # pylint: disable=too-many-locals
     x_ini_values: Tuple[int, ...],
     y_ini_values: Tuple[int, ...],
     labelers: Tuple[str, str],
@@ -30,14 +31,20 @@ def visualize_data(
         img_path = (
             f"{base_path}/patches/Train/core_A0AL_AN_x_ini_{x_ini}_y_ini_{y_ini}.png"
         )
-        non_expert_mask_path = f"{base_path}/masks/Train/{labelers[0]}/core_A0AL_AN_x_ini_{x_ini}_y_ini_{y_ini}.png"
-        expert_mask_path = f"{base_path}/masks/Train/{labelers[1]}/core_A0AL_AN_x_ini_{x_ini}_y_ini_{y_ini}.png"
+        non_expert_mask_path = (
+            f"{base_path}/masks/Train/{labelers[0]}/"
+            f"core_A0AL_AN_x_ini_{x_ini}_y_ini_{y_ini}.png"
+        )
+        expert_mask_path = (
+            f"{base_path}/masks/Train/{labelers[1]}/"
+            f"core_A0AL_AN_x_ini_{x_ini}_y_ini_{y_ini}.png"
+        )
 
-        im = cv2.imread(img_path)
-        non_expert_mask = cv2.imread(non_expert_mask_path, -1)
-        expert_mask = cv2.imread(expert_mask_path, -1)
+        img = imread(img_path)
+        non_expert_mask = imread(non_expert_mask_path, -1)
+        expert_mask = imread(expert_mask_path, -1)
 
-        axes[i, 0].imshow(im)
+        axes[i, 0].imshow(img)
         axes[i, 0].axis("off")
         axes[i, 1].imshow(non_expert_mask, cmap="Pastel1")
         axes[i, 1].axis("off")
@@ -56,12 +63,12 @@ if __name__ == "__main__":
     x_ini_values = 1074, 1432, 2148
     y_ini_values = 1074, 1432, 2148
     labelers = "NP1", "expert"
-    base_path = "../../../datasets/Histology Data"
-    save_path = "../docs/source/resources/crowd-seg-example-instances.png"
+    BASE_PATH = "../../../datasets/Histology Data"
+    SAVE_PATH = "../docs/source/resources/crowd-seg-example-instances.png"
     visualize_data(
         x_ini_values=x_ini_values,
         y_ini_values=y_ini_values,
         labelers=labelers,
-        base_path=base_path,
-        save_path=save_path,
+        base_path=BASE_PATH,
+        save_path=SAVE_PATH,
     )
