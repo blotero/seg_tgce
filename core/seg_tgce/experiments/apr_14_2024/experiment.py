@@ -1,8 +1,9 @@
 import asyncio
 import signal
+from types import FrameType
 
-from core.seg_tgce.run.oxford_ma_runner.runner import OxfordMARunner
-from core.seg_tgce.run.runner import RunningSessionParams
+from seg_tgce.run.oxford_ma_runner.runner import OxfordMARunner
+from seg_tgce.run.runner import RunningSessionParams
 
 runner = OxfordMARunner(
     params=RunningSessionParams(
@@ -18,12 +19,15 @@ runner = OxfordMARunner(
 )
 
 
-async def interruption_handler():
+async def interruption_handler(  # pylint: disable=unused-argument
+    signum: int,
+    fram: FrameType | None,
+) -> None:
     partial_res = await runner.stop()
     print(partial_res)
 
 
-async def main():
+async def main() -> None:
     signal.signal(signal.SIGINT, interruption_handler)
     results = await runner.run()
     print(results)

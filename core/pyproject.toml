@@ -4,7 +4,6 @@ version = "0.0.1"
 authors = ["Brandon Lotero <blotero@gmail.com>"]
 description = "A package for the SEG TGCE project"
 readme = "README.md"
-requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -15,6 +14,24 @@ repository = "https://github.com/blotero/seg_tgce"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+numpy = "^1.26.4"
+keras = "^3.3.3"
+tensorflow = "^2.16.1"
+matplotlib = "^3.8.4"
+opencv-python = "^4.9.0.80"
+gcpds-image-segmentation = { git = "https://github.com/UN-GCPDS/python-gcpds.image_segmentation" }
+tensorflow-datasets = "^4.9.4"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.2.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.10.0"
+pylint = "^3.1.0"
+black = "^24.4.2"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]

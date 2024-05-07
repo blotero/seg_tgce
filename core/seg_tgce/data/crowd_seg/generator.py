@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
@@ -8,17 +8,18 @@ from keras.utils import Sequence
 from matplotlib import pyplot as plt
 
 LOGGER = logging.getLogger(__name__)
+logging.basicConfig(level=logging.WARNING)
 
 
 class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        image_dir,
-        mask_dir,
-        n_classes,
-        image_size=(256, 256),
-        batch_size=32,
-        shuffle=True,
+        image_dir: str,
+        mask_dir: str,
+        n_classes: int,
+        image_size: Tuple[int, int] = (256, 256),
+        batch_size: int = 32,
+        shuffle: bool = True,
     ):
         self.image_dir = image_dir
         self.mask_dir = mask_dir
@@ -48,16 +49,16 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         images, masks = self.__data_generation(batch_filenames)
         return images, masks
 
-    def on_epoch_end(self):
+    def on_epoch_end(self) -> None:
         if self.shuffle:
             np.random.shuffle(self.image_filenames)
 
     def visualize_sample(
         self,
         scorers: List[str],
-        batch_index=1,
-        sample_index=1,
-    ):
+        batch_index: int = 1,
+        sample_index: int = 1,
+    ) -> plt.Figure:
         images, masks = self[batch_index]
 
         fig, axes = plt.subplots(len(scorers), self.n_classes + 1)

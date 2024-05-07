@@ -2,7 +2,9 @@ from keras.models import Model
 from tensorflow import GradientTape
 
 
-class ModelMultipleAnnotators(Model):  # pylint: disable=abstract-method
+class ModelMultipleAnnotators(
+    Model
+):  # pylint: disable=abstract-method, too-few-public-methods
     def train_step(self, data):
         x, y = data
 

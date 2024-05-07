@@ -15,7 +15,7 @@ def visualize_data(  # pylint: disable=too-many-locals
     labelers: Tuple[str, str],
     base_path: str,
     save_path: str,
-):
+) -> None:
     """
     Simple routine for visualizing some patches and masks
     """
