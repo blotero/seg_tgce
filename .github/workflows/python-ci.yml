@@ -33,12 +33,13 @@ jobs:
         run: |
           cd core
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install poetry
+          poetry install
 
       - name: Run pytest
         run: |
           cd core
-          python -m pytest -m "not with_crowd_seg_data"
+          poetry run pytest -m "not with_crowd_seg_data"
 
   lint-core:
     runs-on: ubuntu-22.04
@@ -65,17 +66,18 @@ jobs:
         run: |
           cd core
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install poetry
+          poetry install
 
       - name: Run mypy
         run: |
           cd core
-          python -m mypy seg_tgce
+          poetry run mypy seg_tgce
 
       - name: Run pylint
         run: |
           cd core
-          python -m pylint seg_tgce
+          poetry run pylint seg_tgce
 
   lint-docs:
     runs-on: ubuntu-22.04
