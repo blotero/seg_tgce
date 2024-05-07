@@ -13,10 +13,10 @@ repository = "https://github.com/blotero/seg_tgce"
 
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.11,<3.12"
 numpy = "^1.26.4"
-keras = "^3.3.3"
-tensorflow = "^2.16.1"
+keras = "2.15.0"
+tensorflow = "2.15.1"
 matplotlib = "^3.8.4"
 opencv-python = "^4.9.0.80"
 gcpds-image-segmentation = { git = "https://github.com/UN-GCPDS/python-gcpds.image_segmentation" }
