@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Tuple
 
 from keras.initializers import GlorotUniform
 from keras.layers import (
@@ -19,17 +20,17 @@ DefaultPooling = partial(MaxPool2D, pool_size=2)
 upsample = partial(UpSampling2D, (2, 2))
 
 
-def kernel_initializer(seed):
+def kernel_initializer(seed: float) -> GlorotUniform:
     return GlorotUniform(seed=seed)
 
 
 def unet_tgce(  # pylint: disable=too-many-statements
-    input_shape=(128, 128, 3),
-    name="UNET",
-    out_channels=2,
-    n_scorers=5,
-    out_act_functions=("softmax", "sigmoid"),
-):
+    input_shape: Tuple[int, int, int] = (128, 128, 3),
+    name: str = "UNET",
+    out_channels: int = 2,
+    n_scorers: int = 5,
+    out_act_functions: Tuple[str, str] = ("softmax", "sigmoid"),
+) -> ModelMultipleAnnotators:
     # Encoder
     input_layer = Input(shape=input_shape)
 

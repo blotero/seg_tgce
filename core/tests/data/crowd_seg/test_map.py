@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from core.seg_tgce.data.crowd_seg.map import DataTarget, find_annotators_alias
+from seg_tgce.data.crowd_seg.map import DataTarget, find_annotators_alias
 
 BASE_PATH = Path("/home/brandon/unal/maestria/datasets/Histology Data")
 

@@ -1,10 +1,18 @@
+from typing import List
+
 import numpy as np
+from keras import Tensor
 from matplotlib import pyplot as plt
 
 
 def epoch_progress_plotter(  # pylint: disable=too-many-arguments
-    x, y, predictions, num_img, noise_values, num_annotators
-):
+    x: Tensor,
+    y: Tensor,
+    predictions: Tensor,
+    num_img: int,
+    noise_values: List[float],
+    num_annotators: int,
+) -> None:
     _, axes = plt.subplots(4, num_annotators, figsize=(15, 9))
 
     axes[0, 0].imshow(x[num_img, :, :, :])
@@ -57,7 +65,7 @@ def plot_losses_and_metrics(
     val_losses: list[float],
     val_dices: list[float],
     title: str,
-):
+) -> None:
     plt.figure(figsize=(12, 4))
     plt.subplot(1, 2, 1)
     plt.plot(losses, label="Training Loss")

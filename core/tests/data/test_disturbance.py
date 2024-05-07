@@ -1,7 +1,7 @@
 import tensorflow as tf
 from keras.models import load_model
 
-from core.seg_tgce.data.oxford_pet.disturbance.model import (
+from seg_tgce.data.oxford_pet.disturbance.model import (
     download_base_model,
     find_last_encoder_conv_layer,
     produce_disturbed_models,

@@ -17,7 +17,7 @@ class TcgeConfig:
     gamma: float = 0.1
 
 
-def binary_entropy(target, pred):
+def binary_entropy(target: tf.Tensor, pred: tf.Tensor) -> tf.Tensor:
     """
     Adds binary entropy to the loss.
     """

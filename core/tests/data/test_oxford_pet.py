@@ -1,11 +1,11 @@
 from keras.models import load_model
 
-from core.seg_tgce.data.oxford_pet.disturbance.model import (
+from seg_tgce.data.oxford_pet.disturbance.model import (
     download_base_model,
     find_last_encoder_conv_layer,
     produce_disturbed_models,
 )
-from core.seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
+from seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
 
 
 def test_oxford_pet_flow() -> None:

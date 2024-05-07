@@ -10,7 +10,7 @@ def disturb_mask(
     image: tf.Tensor,
     model_shape: Tuple[int, int],
     target_shape: Tuple[int, int],
-):
+) -> tf.Tensor:
     return tf.image.resize(model(tf.image.resize(image, model_shape)), target_shape)
 
 

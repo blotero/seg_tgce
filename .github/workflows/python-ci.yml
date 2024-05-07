@@ -70,12 +70,12 @@ jobs:
       - name: Run mypy
         run: |
           cd core
-          python -m mypy .
+          python -m mypy seg_tgce
 
       - name: Run pylint
         run: |
           cd core
-          python -m pylint .
+          python -m pylint seg_tgce
 
   lint-docs:
     runs-on: ubuntu-22.04

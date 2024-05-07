@@ -1,23 +1,25 @@
+from typing import List
+
 import numpy as np
 import tensorflow as tf
-from keras.models import load_model
+from keras.models import Model, load_model
 from keras.optimizers import Adam
 
-from core.seg_tgce.data.oxford_pet.disturbance.model import (
+from seg_tgce.data.oxford_pet.disturbance.model import (
     download_base_model,
     find_last_encoder_conv_layer,
     produce_disturbed_models,
 )
-from core.seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
-from core.seg_tgce.loss.tgce import TcgeConfig, TcgeSs
-from core.seg_tgce.metrics.dice_coefficient import DiceCoefficient
-from core.seg_tgce.models.unet import unet_tgce
-from core.seg_tgce.run.oxford_ma_runner.model_result import ModelResult
-from core.seg_tgce.run.oxford_ma_runner.plotting import (
+from seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
+from seg_tgce.loss.tgce import TcgeConfig, TcgeSs
+from seg_tgce.metrics.dice_coefficient import DiceCoefficient
+from seg_tgce.models.unet import unet_tgce
+from seg_tgce.run.oxford_ma_runner.model_result import ModelResult
+from seg_tgce.run.oxford_ma_runner.plotting import (
     epoch_progress_plotter,
     plot_losses_and_metrics,
 )
-from core.seg_tgce.run.runner import (
+from seg_tgce.run.runner import (
     Runner,
     RunningSessionParams,
     SessionPartialResults,
@@ -25,7 +27,7 @@ from core.seg_tgce.run.runner import (
 )
 
 
-def fetch_models(noise_levels_snr: list[float]):
+def fetch_models(noise_levels_snr: list[float]) -> List[Model]:
     model_path = download_base_model()
     model_ann = load_model(model_path, compile=False)
 
@@ -101,7 +103,9 @@ class OxfordMARunner(Runner):
                         loss = loss_fn.call(y_batch, predictions)
 
                     gradients = tape.gradient(loss, model.trainable_variables)
-                    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+                    optimizer.apply_gradients(
+                        zip(gradients, model.trainable_variables)  # type:ignore
+                    )
 
                     epoch_loss += float(loss.numpy())
                     epoch_losses.append(loss.numpy())

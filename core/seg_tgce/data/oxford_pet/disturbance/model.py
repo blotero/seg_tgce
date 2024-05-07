@@ -73,7 +73,7 @@ def download_base_model() -> str:
         if file.endswith(model_extension):
             paths.append(file)
 
-    return paths[0]
+    return os.path.abspath(paths[0])
 
 
 def find_last_encoder_conv_layer(model: Model) -> Layer:
