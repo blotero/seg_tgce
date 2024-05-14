@@ -1,8 +1,9 @@
 import tensorflow as tf
-from gcpds.image_segmentation.datasets.segmentation import OxfordIiitPet
 from keras.models import Model
 
 from seg_tgce.data.utils import map_dataset_multiple_annotators
+
+from .oxford_iiit_pet import OxfordIiitPet
 
 MODEL_ORIGINAL_SHAPE = (256, 256)
 
