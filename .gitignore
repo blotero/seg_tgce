@@ -6,3 +6,4 @@ node_modules
 docs/build
 **/Seed-Detection-2-1
 notebooks/**/.ipynb_checkpoints
+core/dist
