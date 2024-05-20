@@ -1,26 +1,41 @@
 import logging
 import os
-from typing import List, Tuple
+from typing import List, Optional, Tuple, TypedDict
 
 import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import Sequence
 from matplotlib import pyplot as plt
 
+from .retrieve import fetch_data, get_masks_dir, get_patches_dir
+from .stage import Stage
+
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING)
+
+
+class CustomPath(TypedDict):
+    image_dir: str
+    mask_dir: str
 
 
 class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        image_dir: str,
-        mask_dir: str,
         n_classes: int,
         image_size: Tuple[int, int] = (256, 256),
         batch_size: int = 32,
         shuffle: bool = True,
+        stage: Stage = Stage.TRAIN,
+        paths: Optional[CustomPath] = None,
     ):
+        if paths is not None:
+            image_dir = paths["image_dir"]
+            mask_dir = paths["mask_dir"]
+        else:
+            fetch_data()
+            image_dir = get_patches_dir(stage)
+            mask_dir = get_masks_dir(stage)
         self.image_dir = image_dir
         self.mask_dir = mask_dir
         self.image_size = image_size
@@ -35,7 +50,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         )
         self.n_scorers = len(os.listdir(mask_dir))
         self.scorers_tags = sorted(os.listdir(mask_dir))
-        print(f"Scorer tags: {self.scorers_tags}")
+        LOGGER.info("Scorer tags: %s", self.scorers_tags)
         self.n_classes = n_classes
         self.on_epoch_end()
 
@@ -121,20 +136,3 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             images[batch] = image
 
         return images, masks
-
-
-if __name__ == "__main__":
-    val_gen = ImageDataGenerator(
-        image_dir="/home/brandon/unal/maestria/datasets/Histology Data/patches/Val",
-        mask_dir="/home/brandon/unal/maestria/datasets/Histology Data/masks/Val",
-        batch_size=16,
-        n_classes=6,
-    )
-    print(f"Train len: {len(val_gen)}")
-    print(f"Train masks scorers: {val_gen.n_scorers}")
-    print(f"Train masks scorers tags: {val_gen.scorers_tags}")
-    val_gen.visualize_sample(
-        batch_index=8,
-        sample_index=8,
-        scorers=["NP8", "NP16", "NP21", "expert"],
-    )
