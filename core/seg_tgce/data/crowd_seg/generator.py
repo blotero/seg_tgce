@@ -120,7 +120,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
                         ).reshape(*self.image_size)
                     plt.show()
                 else:
-                    LOGGER.warning(
+                    LOGGER.info(
                         (
                             "Mask not found for scorer %s and image %s "
                             "Filling up with zeros."
