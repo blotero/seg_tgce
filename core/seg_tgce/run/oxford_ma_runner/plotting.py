@@ -1,8 +1,8 @@
 from typing import List
 
 import numpy as np
-from keras import Tensor
 from matplotlib import pyplot as plt
+from tensorflow import Tensor
 
 
 def epoch_progress_plotter(  # pylint: disable=too-many-arguments
