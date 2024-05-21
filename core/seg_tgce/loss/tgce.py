@@ -4,6 +4,10 @@ from typing import Any
 import keras.backend as K
 import tensorflow as tf
 from keras.losses import Loss
+from tensorflow import cast
+from tensorflow import float32 as tf_float32
+
+TARGET_DATA_TYPE = tf_float32
 
 
 @dataclass
@@ -54,6 +58,8 @@ class TcgeSs(Loss):  # type: ignore
         """
         Calls loss function itself.
         """
+        y_true = cast(y_true, TARGET_DATA_TYPE)
+        y_pred = cast(y_pred, TARGET_DATA_TYPE)
         lambda_r = y_pred[..., self.num_classes :]  # type:ignore
         y_pred_ = y_pred[..., : self.num_classes]  # type:ignore
         n_samples, width, height, _ = y_pred_.shape

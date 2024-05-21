@@ -622,23 +622,21 @@ files = [
 
 [[package]]
 name = "gdown"
-version = "5.2.0"
-description = "Google Drive Public File/Folder Downloader"
+version = "4.6.3"
+description = "Google Drive direct download of big files."
 optional = false
-python-versions = ">=3.8"
+python-versions = "*"
 files = [
-    {file = "gdown-5.2.0-py3-none-any.whl", hash = "sha256:33083832d82b1101bdd0e9df3edd0fbc0e1c5f14c9d8c38d2a35bf1683b526d6"},
-    {file = "gdown-5.2.0.tar.gz", hash = "sha256:2145165062d85520a3cd98b356c9ed522c5e7984d408535409fd46f94defc787"},
+    {file = "gdown-4.6.3-py3-none-any.whl", hash = "sha256:36bbb962b373f9634af1b9a10c73e231d3ad9b084659efd93bf3c62d57c25a97"},
+    {file = "gdown-4.6.3.tar.gz", hash = "sha256:ec6ea922ef4e3616a054073656d9aa2cdc717fbdbd0a94d2f77d52d323943307"},
 ]
 
 [package.dependencies]
 beautifulsoup4 = "*"
 filelock = "*"
 requests = {version = "*", extras = ["socks"]}
+six = "*"
 tqdm = "*"
-
-[package.extras]
-test = ["build", "mypy", "pytest", "pytest-xdist", "ruff", "twine", "types-requests", "types-setuptools"]
 
 [[package]]
 name = "google-auth"
@@ -2299,4 +2297,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "5b2f54e98b19528a9685c651d3d5dec59f399e4adcbb6dc2861daa31437a9bb7"
+content-hash = "a7c915d41bc021f99b36f1688dd1a6667f361865dfda1b958ff2f5bce632c1fb"
