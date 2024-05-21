@@ -6,6 +6,7 @@ import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import Sequence
 from matplotlib import pyplot as plt
+from tensorflow import transpose
 
 from .retrieve import fetch_data, get_masks_dir, get_patches_dir
 from .stage import Stage
@@ -15,11 +16,20 @@ logging.basicConfig(level=logging.WARNING)
 
 
 class CustomPath(TypedDict):
+    """Custom path for image and mask directories."""
+
     image_dir: str
     mask_dir: str
 
 
 class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
+    """
+    Data generator for crowd segmentation data.
+    Delivered data is in the form of images and masks.
+    Shapes are as follows:
+    - images: (batch_size, image_size[0], image_size[1], 3)
+    - masks: (batch_size, image_size[0], image_size[1]), n_classes, n_scorers"""
+
     def __init__(  # pylint: disable=too-many-arguments
         self,
         n_classes: int,
@@ -81,7 +91,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             for class_num in range(self.n_classes):
                 axes[scorer_num][0].imshow(images[sample_index].astype(int))
                 axes[scorer_num][class_num + 1].imshow(
-                    masks[sample_index, scorer_num, class_num]
+                    masks[sample_index, :, :, class_num, scorer_num]
                 )
                 axes[scorer_num][0].axis("off")
                 axes[scorer_num][class_num + 1].axis("off")
@@ -135,4 +145,4 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
 
             images[batch] = image
 
-        return images, masks
+        return images, transpose(masks, perm=[0, 3, 4, 2, 1])
