@@ -3,14 +3,11 @@ from typing import Tuple
 from .generator import ImageDataGenerator
 from .stage import Stage
 
-_DEFAULT_N_CLASSES = 6
-
 
 def get_all_data(
-    n_classes: int = _DEFAULT_N_CLASSES,
     image_size: Tuple[int, int] = (256, 256),
     batch_size: int = 32,
-    shuffle: bool = True,
+    shuffle: bool = False,
 ) -> Tuple[ImageDataGenerator, ...]:
     """
     Retrieve all data generators for the crowd segmentation task.
@@ -19,7 +16,6 @@ def get_all_data(
     return tuple(
         ImageDataGenerator(
             batch_size=batch_size,
-            n_classes=n_classes,
             image_size=image_size,
             shuffle=shuffle,
             stage=stage,
@@ -30,17 +26,15 @@ def get_all_data(
 
 def get_stage_data(
     stage: Stage,
-    n_classes: int = _DEFAULT_N_CLASSES,
     image_size: Tuple[int, int] = (256, 256),
     batch_size: int = 32,
-    shuffle: bool = True,
+    shuffle: bool = False,
 ) -> ImageDataGenerator:
     """
     Retrieve a data generator for a specific stage of the crowd segmentation task.
     """
     return ImageDataGenerator(
         batch_size=batch_size,
-        n_classes=n_classes,
         image_size=image_size,
         shuffle=shuffle,
         stage=stage,
