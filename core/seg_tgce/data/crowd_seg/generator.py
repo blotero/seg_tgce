@@ -7,12 +7,31 @@ from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import Sequence
 from matplotlib import pyplot as plt
 from tensorflow import transpose
+from tensorflow import Tensor
+from tensorflow import argmax as tf_argmax
 
-from .retrieve import fetch_data, get_masks_dir, get_patches_dir
+from .__retrieve import fetch_data, get_masks_dir, get_patches_dir
 from .stage import Stage
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING)
+
+CLASSES_DEFINITION = {
+    0: "Ignore",
+    1: "Other",
+    2: "Tumor",
+    3: "Stroma",
+    4: "Benign Inflammation",
+    5: "Necrosis",
+}
+
+
+class ScorerNotFoundError(Exception):
+    pass
+
+
+class InvalidClassLabelError(Exception):
+    pass
 
 
 class CustomPath(TypedDict):
@@ -22,23 +41,28 @@ class CustomPath(TypedDict):
     mask_dir: str
 
 
-class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
+def get_image_filenames(image_dir: str) -> List[str]:
+    return sorted(
+        [filename for filename in os.listdir(image_dir) if filename.endswith(".png")]
+    )
+
+
+class ImageDataGenerator(Sequence):
     """
     Data generator for crowd segmentation data.
-    Delivered data is in the form of images and masks.
+    Delivered data is in the form of images, masks and scorers labels.
     Shapes are as follows:
     - images: (batch_size, image_size[0], image_size[1], 3)
-    - masks: (batch_size, image_size[0], image_size[1]), n_classes, n_scorers"""
+    - masks: (batch_size, image_size[0], image_size[1], n_classes, n_scorers)"""
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        n_classes: int,
         image_size: Tuple[int, int] = (256, 256),
         batch_size: int = 32,
-        shuffle: bool = True,
+        shuffle: bool = False,
         stage: Stage = Stage.TRAIN,
         paths: Optional[CustomPath] = None,
-    ):
+    ) -> None:
         if paths is not None:
             image_dir = paths["image_dir"]
             mask_dir = paths["mask_dir"]
@@ -51,28 +75,33 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         self.image_size = image_size
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.image_filenames = sorted(
-            [
-                filename
-                for filename in os.listdir(image_dir)
-                if filename.endswith(".png")
-            ]
-        )
-        self.n_scorers = len(os.listdir(mask_dir))
+        self.image_filenames = get_image_filenames(image_dir)
         self.scorers_tags = sorted(os.listdir(mask_dir))
-        LOGGER.info("Scorer tags: %s", self.scorers_tags)
-        self.n_classes = n_classes
         self.on_epoch_end()
 
-    def __len__(self):
+    @property
+    def classes_definition(self) -> dict[int, str]:
+        """Returns classes definition."""
+        return CLASSES_DEFINITION
+
+    @property
+    def n_classes(self) -> int:
+        """Returns number of classes."""
+        return len(self.classes_definition)
+
+    @property
+    def n_scorers(self) -> int:
+        """Returns number of scorers."""
+        return len(self.scorers_tags)
+
+    def __len__(self) -> int:
         return int(np.ceil(len(self.image_filenames) / self.batch_size))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
         batch_filenames = self.image_filenames[
             index * self.batch_size : (index + 1) * self.batch_size
         ]
-        images, masks = self.__data_generation(batch_filenames)
-        return images, masks
+        return self.__data_generation(batch_filenames)
 
     def on_epoch_end(self) -> None:
         if self.shuffle:
@@ -80,28 +109,44 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
 
     def visualize_sample(
         self,
-        scorers: List[str],
-        batch_index: int = 1,
-        sample_index: int = 1,
+        scorers: Optional[List[str]] = None,
+        batch_index: int = 0,
+        sample_indexes: Optional[List[int]] = None,
     ) -> plt.Figure:
+        """
+        Visualizes a sample from the dataset."""
+        if scorers is None:
+            scorers = self.scorers_tags
         images, masks = self[batch_index]
+        if sample_indexes is None:
+            sample_indexes = [0, 1, 2, 3]
 
-        fig, axes = plt.subplots(len(scorers), self.n_classes + 1)
-        for scorer_num, scorer in enumerate(scorers):
-            for class_num in range(self.n_classes):
-                axes[scorer_num][0].imshow(images[sample_index].astype(int))
-                axes[scorer_num][class_num + 1].imshow(
-                    masks[sample_index, :, :, class_num, scorer_num]
+        fig, axes = plt.subplots(len(sample_indexes), len(scorers) + 1)
+        for ax in axes.flatten():
+            ax.axis("off")
+
+        for i, sample_index in enumerate(sample_indexes):
+            axes[i, 0].imshow(images[sample_index].astype(int))
+            axes[i, 0].set_title(
+                self.image_filenames[batch_index * self.batch_size + sample_index]
+            )
+            for j, scorer in enumerate(scorers):
+                if scorer not in self.scorers_tags:
+                    raise ScorerNotFoundError(
+                        f"Scorer {scorer} not found in the dataset scorers "
+                        f"({self.scorers_tags})."
+                    )
+                scorer_index = self.scorers_tags.index(scorer)
+                axes[i, j + 1].imshow(
+                    tf_argmax(masks[sample_index, :, :, :, scorer_index], axis=2),
+                    cmap="viridis",
                 )
-                axes[scorer_num][0].axis("off")
-                axes[scorer_num][class_num + 1].axis("off")
-                axes[scorer_num][0].set_title(f"Image (ann {scorer})")
-                axes[scorer_num][class_num + 1].set_title(f"Class {class_num}")
+                axes[i, j + 1].set_title(f"Label for {scorer}")
 
         plt.show()
         return fig
 
-    def __data_generation(self, batch_filenames):
+    def __data_generation(self, batch_filenames: List[str]) -> Tuple[Tensor, Tensor]:
         images = np.empty((self.batch_size, *self.image_size, 3))
         masks = np.empty(
             (
@@ -124,21 +169,28 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
                         target_size=self.image_size,
                     )
                     mask = img_to_array(mask_raw)
-                    for class_num in range(self.n_classes):
+                    if not np.all(
+                        np.isin(np.unique(mask), list(self.classes_definition))
+                    ):
+                        raise InvalidClassLabelError(
+                            f"Mask {mask_path} contains invalid values. "
+                            f"Expected values: {list(self.classes_definition)}."
+                            f"Values found: {np.unique(mask)}"
+                        )
+                    for class_num in self.classes_definition:
                         masks[batch][scorer][class_num] = np.where(
                             mask == class_num, 1, 0
                         ).reshape(*self.image_size)
-                    plt.show()
                 else:
                     LOGGER.info(
-                        (
-                            "Mask not found for scorer %s and image %s "
-                            "Filling up with zeros."
-                        ),
+                        "Mask not found for scorer %s and image %s",
                         scorer_dir,
                         filename,
                     )
-                    masks[batch, scorer] = np.zeros((self.n_classes, *self.image_size))
+                    masks[batch, scorer, 0] = np.ones(self.image_size)
+                    masks[batch, scorer, 1:] = np.zeros(
+                        (self.n_classes - 1, *self.image_size)
+                    )
 
             image = load_img(img_path, target_size=self.image_size)
             image = img_to_array(image)
