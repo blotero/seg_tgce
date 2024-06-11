@@ -24,6 +24,7 @@ CLASSES_DEFINITION = {
     4: "Benign Inflammation",
     5: "Necrosis",
 }
+DEFAULT_IMG_SIZE = (512, 512)
 
 
 class ScorerNotFoundError(Exception):
@@ -57,7 +58,7 @@ class ImageDataGenerator(Sequence):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        image_size: Tuple[int, int] = (256, 256),
+        image_size: Tuple[int, int] = DEFAULT_IMG_SIZE,
         batch_size: int = 32,
         shuffle: bool = False,
         stage: Stage = Stage.TRAIN,

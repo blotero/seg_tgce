@@ -25,7 +25,7 @@ def kernel_initializer(seed: float) -> GlorotUniform:
 
 
 def unet_tgce(  # pylint: disable=too-many-statements
-    input_shape: Tuple[int, int, int] = (128, 128, 3),
+    input_shape: Tuple[int, int, int],
     name: str = "UNET",
     out_channels: int = 2,
     n_scorers: int = 5,

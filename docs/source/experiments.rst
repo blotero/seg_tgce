@@ -43,9 +43,9 @@ layer for producing scorers with different lebels of agreement.
  Crowd Seg Histopatological images
 ***********************************
 
-Our second experiment was elaborated on the CrowdSeg dataset, which
-consists of Triple Negative Breast Cancer images labeled by 20 medical
-students.
+Our second experiment was elaborated on the `CrowdSeg
+<https://github.com/wizmik12/CRowd_Seg>`_ dataset, which consists of
+Triple Negative Breast Cancer images labeled by 20 medical students.
 
 This dataset fairly represents the original intention of the project,
 which is to provide a tool for pathologists to segment histopathological
@@ -61,8 +61,52 @@ in the figure:
    :align: center
    :alt: Different labeling instances for three different patches of the CrowdSeg dataset.
 
-Loading the dataset
-===================
+Fetching and loading the dataset
+================================
+
+You can use the simple API provided by the ``seg_tgce.data.crowd_seg``
+for either Fetching all available data or a single stage (train, test of
+val).
+
+You can fetch your data simply like this:
+
+.. code:: python
+
+   from seg_tgce.data.crowd_seg import get_all_data
+
+   train, val, test = get_all_data(batch_size=8)
+   for i in range(1):
+      img, mask = val[i]
+      print(f"Batch {i}: {img.shape}, {mask.shape}")
+      
+Output: 
+
+.. code:: text
+
+      Batch 0: (8, 512, 512, 3), (8, 512, 512, 6, 23)
+
+A single stage can also be fetched, and even visualized:
+
+.. code:: python
+
+   from seg_tgce.data.crowd_seg import get_stage_data
+   from seg_tgce.data.crowd_seg.stage import Stage
+
+   val = get_stage_data(stage = Stage.VAL, batch_size=8)
+   val.visualize_sample()
+
+When running
+the ``visualize_sample`` method, the generator will load the images and
+masks from the disk and display them, with a result similar to the
+following:
+
+.. image:: resources/crowd-seg-generator-visualization.png
+   :width: 100%
+   :align: center
+   :alt: sample from the CrowdSeg dataset with the ``ImageDataGenerator`` class.
+
+Loading the dataset manually
+============================
 
 If you already have a downloaded dataset in a certain directory, you can
 load it symply as a keras sequence with the ``ImageDataGenerator``
@@ -88,12 +132,5 @@ class:
    )
 
 The ``ImageDataGenerator`` class is a subclass of the Keras ``Sequence``
-class, which allows us to load the dataset in a lazy way. When running
-the ``visualize_sample`` method, the generator will load the images and
-masks from the disk and display them., with a result similar to the
-following
+class, which allows us to load the dataset in a lazy way. 
 
-.. image:: resources/crowd-seg-generator-visualization.png
-   :width: 100%
-   :align: center
-   :alt: sample from the CrowdSeg dataset with the ``ImageDataGenerator`` class.

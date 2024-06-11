@@ -3,9 +3,11 @@ from typing import Tuple
 from .generator import ImageDataGenerator
 from .stage import Stage
 
+DEFAULT_TARGET_SIZE = (512, 512)
+
 
 def get_all_data(
-    image_size: Tuple[int, int] = (256, 256),
+    image_size: Tuple[int, int] = DEFAULT_TARGET_SIZE,
     batch_size: int = 32,
     shuffle: bool = False,
 ) -> Tuple[ImageDataGenerator, ...]:
@@ -26,7 +28,7 @@ def get_all_data(
 
 def get_stage_data(
     stage: Stage,
-    image_size: Tuple[int, int] = (256, 256),
+    image_size: Tuple[int, int] = DEFAULT_TARGET_SIZE,
     batch_size: int = 32,
     shuffle: bool = False,
 ) -> ImageDataGenerator:
