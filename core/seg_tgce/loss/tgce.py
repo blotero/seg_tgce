@@ -55,13 +55,15 @@ class TcgeSs(Loss):  # type: ignore
         super().__init__(name=name)
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-        """
-        Calls loss function itself.
-        """
         y_true = cast(y_true, TARGET_DATA_TYPE)
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
+
+        y_pred = y_pred[..., : self.num_classes + self.num_annotators]  # type:ignore
+        y_true = tf.reshape(
+            y_true, (y_true.shape[:-1]) + (self.num_classes, self.num_annotators)
+        )
         lambda_r = y_pred[..., self.num_classes :]  # type:ignore
-        y_pred_ = y_pred[..., : self.num_classes]  # type:ignore
+        y_pred_ = y_pred[..., : self.num_classes]
         n_samples, width, height, _ = y_pred_.shape
         y_pred_ = y_pred_[..., tf.newaxis]  # type:ignore
         y_pred_ = tf.repeat(y_pred_, repeats=[self.num_annotators], axis=-1)
@@ -88,6 +90,7 @@ class TcgeSs(Loss):  # type: ignore
             ),
             axis=-2,
         )
+
         term_c = tf.math.multiply(
             tf.ones([n_samples, width, height, self.num_annotators]) - lambda_r,
             (
@@ -102,9 +105,8 @@ class TcgeSs(Loss):  # type: ignore
         )
 
         loss = tf.math.reduce_mean(tf.math.multiply(lambda_r, term_r) + term_c)
-        loss = tf.where(tf.math.is_nan(loss), tf.constant(0.0), loss)
-        entropy_term = binary_entropy(y_true, y_pred_)
-        loss = tf.math.add(loss, self.gamma * entropy_term)
+        loss = tf.where(tf.math.is_nan(loss), tf.constant(1e-8), loss)
+
         return loss
 
     def get_config(
