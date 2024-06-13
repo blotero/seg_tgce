@@ -1,3 +1,4 @@
+from enum import Enum
 import logging
 import os
 from typing import List, Optional, Tuple, TypedDict
@@ -6,9 +7,8 @@ import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import Sequence
 from matplotlib import pyplot as plt
-from tensorflow import Tensor
+from tensorflow import Tensor, transpose, reshape
 from tensorflow import argmax as tf_argmax
-from tensorflow import transpose
 
 from .__retrieve import fetch_data, get_masks_dir, get_patches_dir
 from .stage import Stage
@@ -42,13 +42,24 @@ class CustomPath(TypedDict):
     mask_dir: str
 
 
+class DataSchema(Enum):
+    """Data schema for the dataset.
+    MA_RAW: Raw data for multiple annotators.
+    MA_SPARSE: Processed data for multiple annotators. Sparse for fulfilling the
+    required dimensions for consistency with the model.
+    """
+
+    MA_RAW = 0
+    MA_SPARSE = 1
+
+
 def get_image_filenames(image_dir: str) -> List[str]:
     return sorted(
         [filename for filename in os.listdir(image_dir) if filename.endswith(".png")]
     )
 
 
-class ImageDataGenerator(Sequence):
+class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
     """
     Data generator for crowd segmentation data.
     Delivered data is in the form of images, masks and scorers labels.
@@ -63,6 +74,7 @@ class ImageDataGenerator(Sequence):
         shuffle: bool = False,
         stage: Stage = Stage.TRAIN,
         paths: Optional[CustomPath] = None,
+        schema: DataSchema = DataSchema.MA_RAW,
     ) -> None:
         if paths is not None:
             image_dir = paths["image_dir"]
@@ -79,6 +91,7 @@ class ImageDataGenerator(Sequence):
         self.image_filenames = get_image_filenames(image_dir)
         self.scorers_tags = sorted(os.listdir(mask_dir))
         self.on_epoch_end()
+        self.schema = schema
 
     @property
     def classes_definition(self) -> dict[int, str]:
@@ -98,11 +111,25 @@ class ImageDataGenerator(Sequence):
     def __len__(self) -> int:
         return int(np.ceil(len(self.image_filenames) / self.batch_size))
 
-    def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
+    def _get_items_raw(self, index: int) -> Tuple[Tensor, Tensor]:
         batch_filenames = self.image_filenames[
             index * self.batch_size : (index + 1) * self.batch_size
         ]
         return self.__data_generation(batch_filenames)
+
+    def _get_items_sparse(self, index: int) -> Tuple[Tensor, Tensor]:
+        batch_filenames = self.image_filenames[
+            index * self.batch_size : (index + 1) * self.batch_size
+        ]
+        images, masks = self.__data_generation(batch_filenames)
+        return images, reshape(masks, (self.batch_size, *self.image_size, -1))
+
+    def __getitem__(self, index: int) -> Tuple[Tensor, Tensor]:
+        match self.schema:
+            case DataSchema.MA_RAW:
+                return self._get_items_raw(index)
+            case DataSchema.MA_SPARSE:
+                return self._get_items_sparse(index)
 
     def on_epoch_end(self) -> None:
         if self.shuffle:
@@ -118,7 +145,7 @@ class ImageDataGenerator(Sequence):
         Visualizes a sample from the dataset."""
         if scorers is None:
             scorers = self.scorers_tags
-        images, masks = self[batch_index]
+        images, masks = self._get_items_raw(batch_index)
         if sample_indexes is None:
             sample_indexes = [0, 1, 2, 3]
 
