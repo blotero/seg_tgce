@@ -2,17 +2,6 @@
 
 [[package]]
 name = "absl-py"
-version = "1.4.0"
-description = "Abseil Python Common Libraries, see https://github.com/abseil/abseil-py."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "absl-py-1.4.0.tar.gz", hash = "sha256:d2c244d01048ba476e7c080bd2c6df5e141d211de80223460d5b3b8a2a58433d"},
-    {file = "absl_py-1.4.0-py3-none-any.whl", hash = "sha256:0d3fe606adfa4f7db64792dd4c7aee4ee0c38ab75dfd353b7a83ed3e957fcb47"},
-]
-
-[[package]]
-name = "absl-py"
 version = "2.1.0"
 description = "Abseil Python Common Libraries, see https://github.com/abseil/abseil-py."
 optional = false
@@ -141,6 +130,44 @@ colorama = ["colorama (>=0.4.3)"]
 d = ["aiohttp (>=3.7.4)", "aiohttp (>=3.7.4,!=3.9.0)"]
 jupyter = ["ipython (>=7.8.0)", "tokenize-rt (>=3.2.0)"]
 uvloop = ["uvloop (>=0.15.2)"]
+
+[[package]]
+name = "boto3"
+version = "1.34.130"
+description = "The AWS SDK for Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "boto3-1.34.130-py3-none-any.whl", hash = "sha256:c163fb7135a94e7b8c8c478a44071c843f05e212fa4bec3105f8a437ecbf1bcb"},
+    {file = "boto3-1.34.130.tar.gz", hash = "sha256:b781d267dd5e7583966e05697f6bd45e2f46c01dc619ba0860b042963ee69296"},
+]
+
+[package.dependencies]
+botocore = ">=1.34.130,<1.35.0"
+jmespath = ">=0.7.1,<2.0.0"
+s3transfer = ">=0.10.0,<0.11.0"
+
+[package.extras]
+crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
+
+[[package]]
+name = "botocore"
+version = "1.34.130"
+description = "Low-level, data-driven core of boto 3."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "botocore-1.34.130-py3-none-any.whl", hash = "sha256:a3b36e9dac1ed31c4cb3a5c5e540a7d8a9b90ff1d17f87734e674154b41776d8"},
+    {file = "botocore-1.34.130.tar.gz", hash = "sha256:a242b3b0a836b14f308a309565cd63e88654cec238f9b73abbbd3c0526db4c81"},
+]
+
+[package.dependencies]
+jmespath = ">=0.7.1,<2.0.0"
+python-dateutil = ">=2.1,<3.0.0"
+urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >= \"3.10\""}
+
+[package.extras]
+crt = ["awscrt (==0.20.11)"]
 
 [[package]]
 name = "cachetools"
@@ -471,46 +498,6 @@ zipp = {version = "*", optional = true, markers = "extra == \"epath\""}
 all = ["etils[array-types]", "etils[eapp]", "etils[ecolab]", "etils[edc]", "etils[enp]", "etils[epath-gcs]", "etils[epath-s3]", "etils[epath]", "etils[epy]", "etils[etqdm]", "etils[etree-dm]", "etils[etree-jax]", "etils[etree-tf]", "etils[etree]"]
 array-types = ["etils[enp]"]
 dev = ["chex", "dataclass_array", "optree", "pyink", "pylint (>=2.6.0)", "pytest", "pytest-subtests", "pytest-xdist", "torch"]
-docs = ["etils[all,dev]", "sphinx-apitree[ext]"]
-eapp = ["absl-py", "etils[epy]", "simple_parsing"]
-ecolab = ["etils[enp]", "etils[epy]", "etils[etree]", "jupyter", "mediapy", "numpy", "packaging", "protobuf"]
-edc = ["etils[epy]"]
-enp = ["etils[epy]", "numpy"]
-epath = ["etils[epy]", "fsspec", "importlib_resources", "typing_extensions", "zipp"]
-epath-gcs = ["etils[epath]", "gcsfs"]
-epath-s3 = ["etils[epath]", "s3fs"]
-epy = ["typing_extensions"]
-etqdm = ["absl-py", "etils[epy]", "tqdm"]
-etree = ["etils[array-types]", "etils[enp]", "etils[epy]", "etils[etqdm]"]
-etree-dm = ["dm-tree", "etils[etree]"]
-etree-jax = ["etils[etree]", "jax[cpu]"]
-etree-tf = ["etils[etree]", "tensorflow"]
-lazy-imports = ["etils[ecolab]"]
-
-[[package]]
-name = "etils"
-version = "1.9.2"
-description = "Collection of common python utils"
-optional = false
-python-versions = ">=3.11"
-files = [
-    {file = "etils-1.9.2-py3-none-any.whl", hash = "sha256:ecd79de1fbfea9b0d6924756cfa922b05ed3360c45cf2170767da4bee0001d20"},
-    {file = "etils-1.9.2.tar.gz", hash = "sha256:15dcd35ac0c0cc2404b46ac0846af3cc4e876fd3d80f36f57951e27e8b9d6379"},
-]
-
-[package.dependencies]
-absl-py = {version = "*", optional = true, markers = "extra == \"etqdm\""}
-fsspec = {version = "*", optional = true, markers = "extra == \"epath\""}
-importlib_resources = {version = "*", optional = true, markers = "extra == \"epath\""}
-numpy = {version = "*", optional = true, markers = "extra == \"enp\""}
-tqdm = {version = "*", optional = true, markers = "extra == \"etqdm\""}
-typing_extensions = {version = "*", optional = true, markers = "extra == \"epy\""}
-zipp = {version = "*", optional = true, markers = "extra == \"epath\""}
-
-[package.extras]
-all = ["etils[array-types]", "etils[eapp]", "etils[ecolab]", "etils[edc]", "etils[enp]", "etils[epath-gcs]", "etils[epath-s3]", "etils[epath]", "etils[epy]", "etils[etqdm]", "etils[etree-dm]", "etils[etree-jax]", "etils[etree-tf]", "etils[etree]"]
-array-types = ["etils[enp]"]
-dev = ["chex", "dataclass_array", "optree", "pydantic", "pyink", "pylint (>=2.6.0)", "pytest", "pytest-subtests", "pytest-xdist", "torch"]
 docs = ["etils[all,dev]", "sphinx-apitree[ext]"]
 eapp = ["absl-py", "etils[epy]", "simple_parsing"]
 ecolab = ["etils[enp]", "etils[epy]", "etils[etree]", "jupyter", "mediapy", "numpy", "packaging", "protobuf"]
@@ -926,6 +913,17 @@ files = [
 
 [package.extras]
 colors = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "jmespath"
+version = "1.0.1"
+description = "JSON Matching Expressions"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "jmespath-1.0.1-py3-none-any.whl", hash = "sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980"},
+    {file = "jmespath-1.0.1.tar.gz", hash = "sha256:90261b206d6defd58fdd5e85f478bf633a2901798906be2ad389150c5c60edbe"},
+]
 
 [[package]]
 name = "keras"
@@ -1568,6 +1566,37 @@ test = ["coveralls", "futures", "mock", "pytest (>=2.7.3)", "pytest-benchmark", 
 
 [[package]]
 name = "protobuf"
+version = "3.20.3"
+description = "Protocol Buffers"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "protobuf-3.20.3-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:f4bd856d702e5b0d96a00ec6b307b0f51c1982c2bf9c0052cf9019e9a544ba99"},
+    {file = "protobuf-3.20.3-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:9aae4406ea63d825636cc11ffb34ad3379335803216ee3a856787bcf5ccc751e"},
+    {file = "protobuf-3.20.3-cp310-cp310-win32.whl", hash = "sha256:28545383d61f55b57cf4df63eebd9827754fd2dc25f80c5253f9184235db242c"},
+    {file = "protobuf-3.20.3-cp310-cp310-win_amd64.whl", hash = "sha256:67a3598f0a2dcbc58d02dd1928544e7d88f764b47d4a286202913f0b2801c2e7"},
+    {file = "protobuf-3.20.3-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:899dc660cd599d7352d6f10d83c95df430a38b410c1b66b407a6b29265d66469"},
+    {file = "protobuf-3.20.3-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:e64857f395505ebf3d2569935506ae0dfc4a15cb80dc25261176c784662cdcc4"},
+    {file = "protobuf-3.20.3-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:d9e4432ff660d67d775c66ac42a67cf2453c27cb4d738fc22cb53b5d84c135d4"},
+    {file = "protobuf-3.20.3-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:74480f79a023f90dc6e18febbf7b8bac7508420f2006fabd512013c0c238f454"},
+    {file = "protobuf-3.20.3-cp37-cp37m-win32.whl", hash = "sha256:b6cc7ba72a8850621bfec987cb72623e703b7fe2b9127a161ce61e61558ad905"},
+    {file = "protobuf-3.20.3-cp37-cp37m-win_amd64.whl", hash = "sha256:8c0c984a1b8fef4086329ff8dd19ac77576b384079247c770f29cc8ce3afa06c"},
+    {file = "protobuf-3.20.3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:de78575669dddf6099a8a0f46a27e82a1783c557ccc38ee620ed8cc96d3be7d7"},
+    {file = "protobuf-3.20.3-cp38-cp38-manylinux2014_aarch64.whl", hash = "sha256:f4c42102bc82a51108e449cbb32b19b180022941c727bac0cfd50170341f16ee"},
+    {file = "protobuf-3.20.3-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:44246bab5dd4b7fbd3c0c80b6f16686808fab0e4aca819ade6e8d294a29c7050"},
+    {file = "protobuf-3.20.3-cp38-cp38-win32.whl", hash = "sha256:c02ce36ec760252242a33967d51c289fd0e1c0e6e5cc9397e2279177716add86"},
+    {file = "protobuf-3.20.3-cp38-cp38-win_amd64.whl", hash = "sha256:447d43819997825d4e71bf5769d869b968ce96848b6479397e29fc24c4a5dfe9"},
+    {file = "protobuf-3.20.3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:398a9e0c3eaceb34ec1aee71894ca3299605fa8e761544934378bbc6c97de23b"},
+    {file = "protobuf-3.20.3-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:bf01b5720be110540be4286e791db73f84a2b721072a3711efff6c324cdf074b"},
+    {file = "protobuf-3.20.3-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:daa564862dd0d39c00f8086f88700fdbe8bc717e993a21e90711acfed02f2402"},
+    {file = "protobuf-3.20.3-cp39-cp39-win32.whl", hash = "sha256:819559cafa1a373b7096a482b504ae8a857c89593cf3a25af743ac9ecbd23480"},
+    {file = "protobuf-3.20.3-cp39-cp39-win_amd64.whl", hash = "sha256:03038ac1cfbc41aa21f6afcbcd357281d7521b4157926f30ebecc8d4ea59dcb7"},
+    {file = "protobuf-3.20.3-py2.py3-none-any.whl", hash = "sha256:a7ca6d488aa8ff7f329d4c545b2dbad8ac31464f1d8b1c87ad1346717731e4db"},
+    {file = "protobuf-3.20.3.tar.gz", hash = "sha256:2e3427429c9cffebf259491be0af70189607f365c2f41c7c3764af6f337105f2"},
+]
+
+[[package]]
+name = "protobuf"
 version = "4.25.3"
 description = ""
 optional = false
@@ -1833,6 +1862,23 @@ files = [
 pyasn1 = ">=0.1.3"
 
 [[package]]
+name = "s3transfer"
+version = "0.10.1"
+description = "An Amazon S3 Transfer Manager"
+optional = false
+python-versions = ">= 3.8"
+files = [
+    {file = "s3transfer-0.10.1-py3-none-any.whl", hash = "sha256:ceb252b11bcf87080fb7850a224fb6e05c8a776bab8f2b64b7f25b969464839d"},
+    {file = "s3transfer-0.10.1.tar.gz", hash = "sha256:5683916b4c724f799e600f41dd9e10a9ff19871bf87623cc8f491cb4f5fa0a19"},
+]
+
+[package.dependencies]
+botocore = ">=1.33.2,<2.0a.0"
+
+[package.extras]
+crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
+
+[[package]]
 name = "setuptools"
 version = "70.0.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -2020,6 +2066,76 @@ and-cuda = ["nvidia-cublas-cu12 (==12.2.5.6)", "nvidia-cuda-cupti-cu12 (==12.2.1
 
 [[package]]
 name = "tensorflow-datasets"
+version = "4.9.5"
+description = "tensorflow/datasets is a library of datasets ready to use with TensorFlow."
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "tensorflow_datasets-4.9.5-py3-none-any.whl", hash = "sha256:3d704dd6a06ec37bb972e648e940cce081626fd570524179423b668c7d6e2c33"},
+    {file = "tensorflow_datasets-4.9.5.tar.gz", hash = "sha256:b0d9d29eebf502676b186cd50094a1855d51e7cc86adffa7ad0354b3dbb1ce66"},
+]
+
+[package.dependencies]
+absl-py = "*"
+array-record = {version = ">=0.5.0", markers = "platform_system == \"Linux\""}
+click = "*"
+dm-tree = "*"
+etils = {version = ">=1.6.0", extras = ["enp", "epath", "epy", "etree"]}
+immutabledict = "*"
+numpy = "*"
+promise = "*"
+protobuf = ">=3.20"
+psutil = "*"
+pyarrow = "*"
+requests = ">=2.19.0"
+simple-parsing = "*"
+tensorflow-metadata = "*"
+termcolor = "*"
+toml = "*"
+tqdm = "*"
+wrapt = "*"
+
+[package.extras]
+aflw2k3d = ["scipy"]
+beir = ["apache-beam"]
+ble-wind-field = ["gcsfs", "zarr"]
+c4 = ["apache-beam", "gcld3", "langdetect", "nltk", "tldextract"]
+c4-wsrs = ["apache-beam"]
+cats-vs-dogs = ["matplotlib"]
+colorectal-histology = ["Pillow"]
+common-voice = ["pydub"]
+dev = ["apache-beam", "conllu", "dill", "jax[cpu]", "jupyter", "pandas", "pydub", "pylint (>=2.6.0)", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "tensorflow-io[tensorflow]", "yapf"]
+duke-ultrasound = ["scipy"]
+eurosat = ["imagecodecs", "scikit-image", "tifffile"]
+groove = ["pretty-midi", "pydub"]
+gtzan = ["pydub"]
+huggingface = ["Pillow", "bs4", "conllu", "datasets", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io[tensorflow]", "tifffile", "tldextract", "zarr"]
+imagenet2012-corrupted = ["opencv-python", "scikit-image", "scipy"]
+librispeech = ["pydub"]
+locomotion = ["envlogger"]
+lsun = ["tensorflow-io[tensorflow]"]
+matplotlib = ["matplotlib"]
+nsynth = ["crepe (>=0.0.11)", "librosa", "scikit-learn (==0.20.3)"]
+ogbg-molpcba = ["networkx", "pandas"]
+pet-finder = ["pandas"]
+qm9 = ["pandas"]
+robonet = ["h5py"]
+robosuite-panda-pick-place-can = ["envlogger"]
+smartwatch-gestures = ["pandas"]
+svhn = ["scipy"]
+tensorflow = ["tensorflow (>=2.1)"]
+tensorflow-data-validation = ["tensorflow-data-validation"]
+tests-all = ["Pillow", "apache-beam", "bs4", "conllu", "dill", "envlogger", "gcld3", "gcsfs", "h5py", "imagecodecs", "jax[cpu]", "jupyter", "langdetect", "lxml", "matplotlib", "mwparserfromhell", "mwxml", "networkx", "nltk", "opencv-python", "pandas", "pretty-midi", "pycocotools", "pydub", "pytest", "pytest-shard", "pytest-xdist", "pyyaml", "scikit-image", "scipy", "tensorflow-io[tensorflow]", "tifffile", "tldextract", "zarr"]
+tf-nightly = ["tf-nightly"]
+the300w-lp = ["scipy"]
+wider-face = ["Pillow"]
+wiki-dialog = ["apache-beam"]
+wikipedia = ["apache-beam", "mwparserfromhell", "mwxml"]
+wsc273 = ["bs4", "lxml"]
+youtube-vis = ["pycocotools"]
+
+[[package]]
+name = "tensorflow-datasets"
 version = "4.9.6"
 description = "tensorflow/datasets is a library of datasets ready to use with TensorFlow."
 optional = false
@@ -2034,10 +2150,7 @@ absl-py = "*"
 array-record = {version = ">=0.5.0", markers = "platform_system == \"Linux\""}
 click = "*"
 dm-tree = "*"
-etils = [
-    {version = ">=1.6.0", extras = ["enp", "epath", "epy", "etree"], markers = "python_version < \"3.11\""},
-    {version = ">=1.9.1", extras = ["enp", "epath", "epy", "etree"], markers = "python_version >= \"3.11\""},
-]
+etils = {version = ">=1.6.0", extras = ["enp", "epath", "epy", "etree"], markers = "python_version < \"3.11\""}
 immutabledict = "*"
 numpy = "*"
 promise = "*"
@@ -2174,21 +2287,6 @@ tensorflow-rocm = ["tensorflow-rocm (>=2.16.0,<2.17.0)"]
 
 [[package]]
 name = "tensorflow-metadata"
-version = "1.13.1"
-description = "Library and standards for schema and statistics."
-optional = false
-python-versions = ">=3.8,<4"
-files = [
-    {file = "tensorflow_metadata-1.13.1-py3-none-any.whl", hash = "sha256:8abdead4cae3d7258f815d9f63a146ae1e31853ac07ba271db0ea9dfb0a6b317"},
-]
-
-[package.dependencies]
-absl-py = ">=0.9,<2.0.0"
-googleapis-common-protos = ">=1.52.0,<2"
-protobuf = ">=3.20.3,<5"
-
-[[package]]
-name = "tensorflow-metadata"
 version = "1.15.0"
 description = "Library and standards for schema and statistics."
 optional = false
@@ -2200,7 +2298,10 @@ files = [
 [package.dependencies]
 absl-py = ">=0.9,<3.0.0"
 googleapis-common-protos = {version = ">=1.56.4,<2", markers = "python_version >= \"3.11\""}
-protobuf = {version = ">=4.25.2,<5", markers = "python_version >= \"3.11\""}
+protobuf = [
+    {version = ">=3.20.3,<4.21", markers = "python_version < \"3.11\""},
+    {version = ">=4.25.2,<5", markers = "python_version >= \"3.11\""},
+]
 
 [[package]]
 name = "termcolor"
@@ -2429,4 +2530,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "a7c915d41bc021f99b36f1688dd1a6667f361865dfda1b958ff2f5bce632c1fb"
+content-hash = "e9123c3d2cd45d9aa389da0a8974822516c7b85160a9a1bb82af43ef37511d39"

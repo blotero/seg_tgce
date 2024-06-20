@@ -137,9 +137,9 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
 
     def visualize_sample(
         self,
-        scorers: Optional[List[str]] = None,
         batch_index: int = 0,
         sample_indexes: Optional[List[int]] = None,
+        scorers: Optional[List[str]] = None,
     ) -> plt.Figure:
         """
         Visualizes a sample from the dataset."""
@@ -210,7 +210,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
                             mask == class_num, 1, 0
                         ).reshape(*self.image_size)
                 else:
-                    LOGGER.info(
+                    LOGGER.debug(
                         "Mask not found for scorer %s and image %s",
                         scorer_dir,
                         filename,
