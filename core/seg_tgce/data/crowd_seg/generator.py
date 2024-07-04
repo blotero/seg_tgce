@@ -31,10 +31,6 @@ class ScorerNotFoundError(Exception):
     pass
 
 
-class InvalidClassLabelError(Exception):
-    pass
-
-
 class CustomPath(TypedDict):
     """Custom path for image and mask directories."""
 
@@ -200,10 +196,13 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
                     if not np.all(
                         np.isin(np.unique(mask), list(self.classes_definition))
                     ):
-                        raise InvalidClassLabelError(
-                            f"Mask {mask_path} contains invalid values. "
-                            f"Expected values: {list(self.classes_definition)}."
-                            f"Values found: {np.unique(mask)}"
+                        LOGGER.warning(
+                            "Mask %s contains invalid values. "
+                            "Expected values: %s. "
+                            "Values found: %s",
+                            mask_path,
+                            list(self.classes_definition),
+                            np.unique(mask),
                         )
                     for class_num in self.classes_definition:
                         masks[batch][scorer][class_num] = np.where(
