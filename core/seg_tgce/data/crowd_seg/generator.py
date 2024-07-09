@@ -1,14 +1,15 @@
-from enum import Enum
 import logging
 import os
+from enum import Enum
 from typing import List, Optional, Tuple, TypedDict
 
 import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
 from keras.utils import Sequence
 from matplotlib import pyplot as plt
-from tensorflow import Tensor, transpose, reshape
+from tensorflow import Tensor
 from tensorflow import argmax as tf_argmax
+from tensorflow import reshape, transpose
 
 from .__retrieve import fetch_data, get_masks_dir, get_patches_dir
 from .stage import Stage
