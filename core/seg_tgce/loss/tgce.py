@@ -4,10 +4,24 @@ from typing import Any
 import keras.backend as K
 import tensorflow as tf
 from keras.losses import Loss
-from tensorflow import cast
+from tensorflow import cast, Tensor
 from tensorflow import float32 as tf_float32
 
 TARGET_DATA_TYPE = tf_float32
+
+
+def safe_divide(
+    numerator: Tensor, denominator: Tensor, epsilon: float = 1e-8
+) -> Tensor:
+    """Safely divide two tensors, avoiding division by zero."""
+    return tf.math.divide(
+        numerator, tf.clip_by_value(denominator, epsilon, tf.reduce_max(denominator))
+    )
+
+
+def stable_pow(x: Tensor, p: Tensor, epsilon: float = 1e-8) -> Tensor:
+    """Compute x^p safely by ensuring x is within a valid range."""
+    return tf.pow(tf.clip_by_value(x, epsilon, 1.0 - epsilon), p)
 
 
 @dataclass
@@ -34,7 +48,7 @@ def binary_entropy(target: tf.Tensor, pred: tf.Tensor) -> tf.Tensor:
     return K.mean(entropy)
 
 
-class TcgeSs(Loss):  # type: ignore
+class TcgeSs(Loss):
     """
     Truncated generalized cross entropy
     for semantic segmentation loss.
@@ -45,12 +59,10 @@ class TcgeSs(Loss):  # type: ignore
         config: TcgeConfig,
         q: float = 0.1,
         name: str = "TGCE_SS",
-        smooth: float = 1e-5,
     ) -> None:
         self.q = q
         self.num_annotators = config.num_annotators
         self.num_classes = config.num_classes
-        self.smooth = smooth
         self.gamma = config.gamma
         super().__init__(name=name)
 
@@ -83,34 +95,38 @@ class TcgeSs(Loss):  # type: ignore
         term_r = tf.math.reduce_mean(
             tf.math.multiply(
                 y_true,
-                (
-                    tf.ones(
-                        [
-                            n_samples,
-                            width,
-                            height,
-                            self.num_classes,
-                            self.num_annotators,
-                        ]
-                    )
-                    - tf.pow(y_pred_, self.q)
-                )
-                / (self.q + epsilon + self.smooth),
+                safe_divide(
+                    (
+                        tf.ones(
+                            [
+                                n_samples,
+                                width,
+                                height,
+                                self.num_classes,
+                                self.num_annotators,
+                            ]
+                        )
+                        - stable_pow(y_pred_, self.q)
+                    ),
+                    (self.q + epsilon),
+                ),
             ),
             axis=-2,
         )
 
         term_c = tf.math.multiply(
             tf.ones([n_samples, width, height, self.num_annotators]) - lambda_r,
-            (
-                tf.ones([n_samples, width, height, self.num_annotators])
-                - tf.pow(
-                    (1 / self.num_classes + self.smooth)
-                    * tf.ones([n_samples, width, height, self.num_annotators]),
-                    self.q,
-                )
-            )
-            / (self.q + epsilon + self.smooth),
+            safe_divide(
+                (
+                    tf.ones([n_samples, width, height, self.num_annotators])
+                    - stable_pow(
+                        (1 / self.num_classes)
+                        * tf.ones([n_samples, width, height, self.num_annotators]),
+                        self.q,
+                    )
+                ),
+                (self.q + epsilon),
+            ),
         )
 
         loss = tf.math.reduce_mean(tf.math.multiply(lambda_r, term_r) + term_c)
@@ -177,7 +193,7 @@ class TcgeSsSparse(TcgeSs):
                     )
                     - tf.pow(y_pred_, self.q)
                 )
-                / (self.q + epsilon + self.smooth),
+                / (self.q + epsilon),
             ),
             axis=-2,
         )
@@ -187,12 +203,12 @@ class TcgeSsSparse(TcgeSs):
             (
                 tf.ones([n_samples, width, height, self.num_annotators])
                 - tf.pow(
-                    (1 / self.num_classes + self.smooth)
+                    (1 / self.num_classes)
                     * tf.ones([n_samples, width, height, self.num_annotators]),
                     self.q,
                 )
             )
-            / (self.q + epsilon + self.smooth),
+            / (self.q + epsilon),
         )
 
         loss = tf.math.reduce_mean(tf.math.multiply(lambda_r, term_r) + term_c)
