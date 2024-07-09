@@ -58,14 +58,23 @@ class TcgeSs(Loss):  # type: ignore
         y_true = cast(y_true, TARGET_DATA_TYPE)
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
 
-        y_pred = y_pred[..., : self.num_classes + self.num_annotators]  # type:ignore
-        y_true = tf.reshape(
-            y_true, (y_true.shape[:-1]) + (self.num_classes, self.num_annotators)
+        y_pred = y_pred[..., : self.num_classes + self.num_annotators]
+
+        y_true_shape = tf.shape(y_true)
+
+        new_shape = tf.concat(
+            [y_true_shape[:-2], [self.num_classes, self.num_annotators]], axis=0
         )
-        lambda_r = y_pred[..., self.num_classes :]  # type:ignore
+        y_true = tf.reshape(y_true, new_shape)
+
+        lambda_r = y_pred[..., self.num_classes :]
         y_pred_ = y_pred[..., : self.num_classes]
-        n_samples, width, height, _ = y_pred_.shape
-        y_pred_ = y_pred_[..., tf.newaxis]  # type:ignore
+
+        n_samples = tf.shape(y_pred_)[0]
+        width = tf.shape(y_pred_)[1]
+        height = tf.shape(y_pred_)[2]
+
+        y_pred_ = y_pred_[..., tf.newaxis]
         y_pred_ = tf.repeat(y_pred_, repeats=[self.num_annotators], axis=-1)
 
         epsilon = 1e-8
@@ -131,7 +140,7 @@ class TcgeSsSparse(TcgeSs):
         y_true = cast(y_true, TARGET_DATA_TYPE)
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
 
-        y_pred = y_pred[..., : self.num_classes + self.num_annotators]  # type:ignore
+        y_pred = y_pred[..., : self.num_classes + self.num_annotators]
 
         y_true_shape = tf.shape(y_true)
 
@@ -140,14 +149,14 @@ class TcgeSsSparse(TcgeSs):
         )
         y_true = tf.reshape(y_true, new_shape)
 
-        lambda_r = y_pred[..., self.num_classes :]  # type:ignore
+        lambda_r = y_pred[..., self.num_classes :]
         y_pred_ = y_pred[..., : self.num_classes]
 
         n_samples = tf.shape(y_pred_)[0]
         width = tf.shape(y_pred_)[1]
         height = tf.shape(y_pred_)[2]
 
-        y_pred_ = y_pred_[..., tf.newaxis]  # type:ignore
+        y_pred_ = y_pred_[..., tf.newaxis]
         y_pred_ = tf.repeat(y_pred_, repeats=[self.num_annotators], axis=-1)
 
         epsilon = 1e-8

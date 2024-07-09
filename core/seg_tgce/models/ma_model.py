@@ -10,10 +10,11 @@ class ModelMultipleAnnotators(
 
         with GradientTape() as tape:
             y_pred = self(x, training=True)
-            loss, _, _ = self.compute_loss(y=y, y_pred=y_pred)
+            loss = self.compute_loss(y=y, y_pred=y_pred)
 
-        gradients = tape.gradient(loss, self.trainable_vars)
-        self.optimizer.apply_gradients(zip(gradients, self.trainable_vars))
+        trainable_vars = self.trainable_variables
+        gradients = tape.gradient(loss, trainable_vars)
+        self.optimizer.apply_gradients(zip(gradients, trainable_vars))
         for metric in self.metrics:
             if metric.name == "loss":
                 metric.update_state(loss)
