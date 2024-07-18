@@ -147,6 +147,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             sample_indexes = [0, 1, 2, 3]
 
         fig, axes = plt.subplots(len(sample_indexes), len(scorers) + 1)
+        assert isinstance(axes, np.ndarray)
         for ax in axes.flatten():
             ax.axis("off")
 

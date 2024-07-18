@@ -35,6 +35,7 @@ def visualize_data(  # pylint: disable=too-many-locals, too-many-arguments
         )
 
         img = imread(img_path)
+        assert isinstance(axes, np.ndarray)
         axes[i, 0].imshow(img)
         img_title = ("Histology patch \n" if i == 0 else "") + img_path.split("/")[-1]
         axes[i, 0].set_title(img_title)

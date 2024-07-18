@@ -11,7 +11,7 @@ from seg_tgce.data.oxford_pet.disturbance.model import (
     produce_disturbed_models,
 )
 from seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
-from seg_tgce.loss.tgce import TcgeConfig, TcgeSs
+from seg_tgce.loss.tgce import TcgeSs
 from seg_tgce.metrics.dice_coefficient import DiceCoefficient
 from seg_tgce.models.unet import unet_tgce
 from seg_tgce.run.oxford_ma_runner.model_result import ModelResult
@@ -71,9 +71,10 @@ class OxfordMARunner(Runner):
             model_name = f"UNET-TGCE_SS_gamma_{entropy_gamma}"
             loss_fn = TcgeSs(
                 q=0.1,
-                config=TcgeConfig(
-                    num_annotators=self.params.num_annotators, gamma=entropy_gamma
-                ),
+                train_annotators=self.params.num_annotators,
+                gamma=entropy_gamma,
+                val_annotators=self.params.num_annotators,
+                num_classes=2,
             )
             dice_fn = DiceCoefficient()
             losses = []

@@ -15,6 +15,8 @@ def epoch_progress_plotter(  # pylint: disable=too-many-arguments
 ) -> None:
     _, axes = plt.subplots(4, num_annotators, figsize=(15, 9))
 
+    assert isinstance(axes, np.ndarray)
+
     axes[0, 0].imshow(x[num_img, :, :, :])
     axes[0, 0].set_title("Input")
     axes[0, 0].axis("off")
