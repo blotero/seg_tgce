@@ -46,6 +46,11 @@ class TcgeSs(Loss):
         super().__init__(name=name)
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+        # A stateless approach here would be much more desirable
+        # but the stage is a mutable attribute and cannot be passed to the call method
+        # since the heritable methods are not called with the stage argument.
+        # Future research should be done to find a better way to handle this.
+
         match self.stage:
             case "train":
                 num_scorers = self.train_annotators
