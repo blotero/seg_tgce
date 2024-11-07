@@ -1,6 +1,8 @@
+import json
 import logging
 import os
 from enum import Enum
+from pathlib import Path
 from typing import List, Optional, Tuple, TypedDict
 
 import numpy as np
@@ -10,6 +12,8 @@ from matplotlib import pyplot as plt
 from tensorflow import Tensor
 from tensorflow import argmax as tf_argmax
 from tensorflow import reshape, transpose
+
+from seg_tgce.data.crowd_seg.types import InvertedMetadataRecord
 
 from .__retrieve import fetch_data, get_masks_dir, get_patches_dir
 from .stage import Stage
@@ -26,6 +30,7 @@ CLASSES_DEFINITION = {
     5: "Necrosis",
 }
 DEFAULT_IMG_SIZE = (512, 512)
+METADATA_PATH = Path(__file__).resolve().parent / "metadata"
 
 
 class ScorerNotFoundError(Exception):
@@ -66,6 +71,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
+        *,
         image_size: Tuple[int, int] = DEFAULT_IMG_SIZE,
         batch_size: int = 32,
         shuffle: bool = False,
@@ -89,6 +95,11 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         self.scorers_tags = sorted(os.listdir(mask_dir))
         self.on_epoch_end()
         self.schema = schema
+        self.scorers_db = {
+            filename: {scorer: False for scorer in self.scorers_tags}
+            for filename in self.image_filenames
+        }
+        self.stage = stage
 
     @property
     def classes_definition(self) -> dict[int, str]:
@@ -211,11 +222,6 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
                             mask == class_num, 1, 0
                         ).reshape(*self.image_size)
                 else:
-                    LOGGER.debug(
-                        "Mask not found for scorer %s and image %s",
-                        scorer_dir,
-                        filename,
-                    )
                     masks[batch, scorer, 0] = np.ones(self.image_size)
                     masks[batch, scorer, 1:] = np.zeros(
                         (self.n_classes - 1, *self.image_size)
@@ -227,3 +233,33 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             images[batch] = image
 
         return images, transpose(masks, perm=[0, 3, 4, 2, 1])
+
+    def populate_metadata(self) -> None:
+        for filename in self.image_filenames:
+            for scorer in self.scorers_tags:
+                scorer_mask_dir = os.path.join(self.mask_dir, scorer)
+                mask_path = os.path.join(scorer_mask_dir, filename)
+                if os.path.exists(mask_path):
+                    self.scorers_db[filename][scorer] = True
+
+    def store_metadata(self) -> None:
+        LOGGER.info("Storing scorers database...")
+        data_path = f"{METADATA_PATH}/{self.stage.name.lower()}_data.json"
+        inverted_path = f"{METADATA_PATH}/{self.stage.name.lower()}_inverted.json"
+        projected_data = {
+            filename: [key for key, value in file_data.items() if value]
+            for filename, file_data in self.scorers_db.items()
+        }
+        inverted_data: dict[str, InvertedMetadataRecord] = {
+            scorer: {"total": 0, "scored": []} for scorer in self.scorers_tags
+        }
+        for img_path, scorers in projected_data.items():
+            for scorer in scorers:
+                inverted_data[scorer]["total"] += 1
+                inverted_data[scorer]["scored"].append(img_path)
+
+        for data, json_path in zip(
+            [projected_data, dict(inverted_data)], [data_path, inverted_path]
+        ):
+            with open(json_path, "w", newline="", encoding="utf-8") as json_file:
+                json.dump(data, json_file, indent=4)

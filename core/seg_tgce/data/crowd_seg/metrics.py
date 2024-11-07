@@ -1,5 +1,5 @@
-from keras.metrics import Metric
 import keras.backend as K
+from keras.metrics import Metric
 from tensorflow import cast
 from tensorflow import float32 as tf_float32
 

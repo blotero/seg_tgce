@@ -2,7 +2,7 @@ from typing import Any
 
 import tensorflow as tf
 from keras.losses import Loss
-from tensorflow import cast, Tensor
+from tensorflow import Tensor, cast
 from tensorflow import float32 as tf_float32
 
 TARGET_DATA_TYPE = tf_float32
@@ -30,6 +30,7 @@ class TcgeSs(Loss):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
+        *,
         train_annotators: int,
         val_annotators: int,
         num_classes: int,
