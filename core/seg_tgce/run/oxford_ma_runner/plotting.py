@@ -6,6 +6,7 @@ from tensorflow import Tensor
 
 
 def epoch_progress_plotter(  # pylint: disable=too-many-arguments
+    *,
     x: Tensor,
     y: Tensor,
     predictions: Tensor,

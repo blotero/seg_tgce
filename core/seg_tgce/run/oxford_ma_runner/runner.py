@@ -156,12 +156,12 @@ class OxfordMARunner(Runner):
                 )
                 if epoch % self.params.plotting_frequency == 0:
                     epoch_progress_plotter(
-                        x_batch,
-                        y_batch,
-                        predictions,
-                        np.random.randint(0, len(x_batch) - 1),
-                        noise_levels_snr,
-                        self.params.num_annotators,
+                        x=x_batch,
+                        y=y_batch,
+                        predictions=predictions,
+                        num_img=np.random.randint(0, len(x_batch) - 1),
+                        noise_values=noise_levels_snr,
+                        num_annotators=self.params.num_annotators,
                     )
 
             model_result = ModelResult(losses, dices, val_losses, val_dices)

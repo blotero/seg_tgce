@@ -18,7 +18,7 @@ class OxfordIiitPet:
         self.one_hot = one_hot
         self.split = OxfordIiitPet._get_splits(split)
         dataset, info = tfds.load(
-            "oxford_iiit_pet:3.*.*", with_info=True, split=self.split
+            "oxford_iiit_pet:3.2.0", with_info=True, split=self.split
         )
         self.info = info
         train, val, test = dataset

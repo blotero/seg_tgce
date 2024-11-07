@@ -11,6 +11,7 @@ class BaseDirectoryNotFoundError(Exception):
 
 
 def visualize_data(  # pylint: disable=too-many-locals, too-many-arguments
+    *,
     x_ini_values: Tuple[int, ...],
     y_ini_values: Tuple[int, ...],
     labelers: Tuple[str, str],
@@ -37,7 +38,9 @@ def visualize_data(  # pylint: disable=too-many-locals, too-many-arguments
         img = imread(img_path)
         assert isinstance(axes, np.ndarray)
         axes[i, 0].imshow(img)
-        img_title = ("Histology patch \n" if i == 0 else "") + img_path.split("/")[-1]
+        img_title = ("Histology patch \n" if i == 0 else "") + img_path.rsplit(
+            "/", maxsplit=1
+        )[-1]
         axes[i, 0].set_title(img_title)
         axes[i, 0].axis("off")
 
