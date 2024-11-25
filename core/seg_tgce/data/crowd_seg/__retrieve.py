@@ -71,7 +71,6 @@ def fetch_data() -> None:
         get_masks_dir(Stage.TEST),
     ]
     if all(verify_path(path) for path in paths_to_verify):
-        LOGGER.info("Data already exists.")
         return
     os.makedirs(_TARGET_DIR, exist_ok=True)
     LOGGER.info("Downloading data...")

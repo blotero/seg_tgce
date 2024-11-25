@@ -3,7 +3,7 @@ import logging
 import os
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Tuple, TypedDict
+from typing import Any, List, Optional, Tuple, TypedDict
 
 import numpy as np
 from keras.preprocessing.image import img_to_array, load_img
@@ -44,21 +44,38 @@ class CustomPath(TypedDict):
     mask_dir: str
 
 
-class DataSchema(Enum):
+class DataSchema(str, Enum):
     """Data schema for the dataset.
     MA_RAW: Raw data for multiple annotators.
     MA_SPARSE: Processed data for multiple annotators. Sparse for fulfilling the
     required dimensions for consistency with the model.
     """
 
-    MA_RAW = 0
-    MA_SPARSE = 1
+    MA_RAW = "ma_raw"
+    MA_SPARSE = "ma_sparse"
 
 
-def get_image_filenames(image_dir: str) -> List[str]:
-    return sorted(
-        [filename for filename in os.listdir(image_dir) if filename.endswith(".png")]
-    )
+def get_image_filenames(
+    image_dir: str, stage: Stage, *, force_balance: bool = False
+) -> List[str]:
+    if not force_balance:
+        return sorted(
+            [
+                filename
+                for filename in os.listdir(image_dir)
+                if filename.endswith(".png")
+            ]
+        )
+    filenames: set[str] = set()
+    inverted_data_path = f"{METADATA_PATH}/{stage.name.lower()}_inverted.json"
+    with open(inverted_data_path, "r", newline="", encoding="utf-8") as json_file:
+        inverted_data: dict[str, Any] = json.load(json_file)
+        # determine `limit` as the lowest number of images scored by a scorer
+        limit = min(data["total"] for data in inverted_data.values())
+        LOGGER.info("Forced balance: limiting to %d images per scorer.", limit)
+        for scorer_data in inverted_data.values():
+            filenames.update(scorer_data["scored"][:limit])
+    return list(filenames)
 
 
 class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attributes
@@ -67,7 +84,18 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
     Delivered data is in the form of images, masks and scorers labels.
     Shapes are as follows:
     - images: (batch_size, image_size[0], image_size[1], 3)
-    - masks: (batch_size, image_size[0], image_size[1], n_classes, n_scorers)"""
+    - masks: (batch_size, image_size[0], image_size[1], n_classes, n_scorers)
+
+    Args:
+    - image_size: Tuple[int, int] = DEFAULT_IMG_SIZE: Image size for the dataset.
+    - batch_size: int = 32: Batch size for the generator.
+    - shuffle: bool = False: Shuffle the dataset.
+    - stage: Stage = Stage.TRAIN: Stage of the dataset.
+    - paths: Optional[CustomPath] = None: Custom paths for image and mask directories.
+    - schema: DataSchema = DataSchema.MA_RAW: Data schema for the dataset.
+    - force_balance: bool = False: Force balance the dataset by downsampling.
+
+    """
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
@@ -78,6 +106,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         stage: Stage = Stage.TRAIN,
         paths: Optional[CustomPath] = None,
         schema: DataSchema = DataSchema.MA_RAW,
+        force_balance: bool = False,
     ) -> None:
         if paths is not None:
             image_dir = paths["image_dir"]
@@ -91,7 +120,9 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         self.image_size = image_size
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.image_filenames = get_image_filenames(image_dir)
+        self.image_filenames = get_image_filenames(
+            image_dir, stage, force_balance=force_balance
+        )
         self.scorers_tags = sorted(os.listdir(mask_dir))
         self.on_epoch_end()
         self.schema = schema
@@ -100,6 +131,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             for filename in self.image_filenames
         }
         self.stage = stage
+        self.force_balance = force_balance
 
     @property
     def classes_definition(self) -> dict[int, str]:
