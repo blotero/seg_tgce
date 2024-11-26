@@ -53,8 +53,8 @@ images.
 
 The dataset is conformed by several histology patches of size 512x512
 px. Masks labels exits for an expert pathologist and 20 medical
-students. Every single patch contains label for every annotator as shown
-in the figure:
+students. Every single patch contains label for some scorers as shown in
+the figure:
 
 .. image:: resources/crowd-seg-example-instances.png
    :width: 100%
@@ -78,12 +78,12 @@ You can fetch your data simply like this:
    for i in range(1):
       img, mask = val[i]
       print(f"Batch {i}: {img.shape}, {mask.shape}")
-      
-Output: 
+
+Output:
 
 .. code:: text
 
-      Batch 0: (8, 512, 512, 3), (8, 512, 512, 6, 23)
+   Batch 0: (8, 512, 512, 3), (8, 512, 512, 6, 23)
 
 A single stage can also be fetched, and even visualized:
 
@@ -95,42 +95,60 @@ A single stage can also be fetched, and even visualized:
    val = get_stage_data(stage = Stage.VAL, batch_size=8)
    val.visualize_sample()
 
-When running
-the ``visualize_sample`` method, the generator will load the images and
-masks from the disk and display them, with a result similar to the
-following:
+For architecture debugging purposes, you can also fetch the data with a
+downsampling for forcing balance between scoreres:
+
+.. code:: python
+
+   train = get_stage_data(stage = Stage.TRAIN, batch_size=8, force_balance=True)
+
+Output:
+
+.. code:: text
+
+   Loading train data with forced balance...
+   INFO:seg_tgce.data.crowd_seg.generator:Forced balance: limiting to 102 images per scorer.
+
+When running the ``visualize_sample`` method, the generator will load
+the images and masks from the disk and display them, with a result
+similar to the following:
 
 .. image:: resources/crowd-seg-generator-visualization.png
    :width: 100%
    :align: center
    :alt: sample from the CrowdSeg dataset with the ``ImageDataGenerator`` class.
 
-Loading the dataset manually
+Loading the generator itself
 ============================
 
-If you already have a downloaded dataset in a certain directory, you can
-load it symply as a keras sequence with the ``ImageDataGenerator``
-class:
+You can also instantiate the generator directly, from the class
+``ImageDataGenerator``, which is the same as returned by the
+``get_all_data`` and ``get_stage_data`` factories:
 
 .. code:: python
 
-   from seg_tgce.data.crowd_seg import ImageDataGenerator
+   from seg_tgce.data.crowd_seg.generator import ImageDataGenerator
+   from seg_tgce.data.crowd_seg.stage import Stage
 
-   val_gen = ImageDataGenerator(
-      image_dir="<path to your dataset root>/Histology Data/patches/Val",
-      mask_dir="<path to your dataset root>/Histology Data/masks/Val",
+   train_gen = ImageDataGenerator(
+      stage=Stage.VAL,
       batch_size=16,
       n_classes=6,
     )
-   print(f"Train len: {len(val_gen)}")
-   print(f"Train masks scorers: {val_gen.n_scorers}")
-   print(f"Train masks scorers tags: {val_gen.scorers_tags}")
+   print(f"Train len: {len(train_gen)}")
+   print(f"Train masks scorers: {train_gen.n_scorers}")
+   print(f"Train masks scorers tags: {train_gen.scorers_tags}")
    val_gen.visualize_sample(
      batch_index=8,
      sample_index=8,
      scorers=["NP8", "NP16", "NP21", "expert"],
    )
 
-The ``ImageDataGenerator`` class is a subclass of the Keras ``Sequence``
-class, which allows us to load the dataset in a lazy way. 
+.. note::
 
+   The ``ImageDataGenerator`` class is a subclass of the Keras
+   ``Sequence`` class, which allows us to load the dataset in a lazy
+   way. On the first instantiation, the generator will download the
+   dataset in a local directory ``__data__/crowd_seg``, which might take
+   a while. After that, the generator will load the images and masks on
+   the fly, as requested by the training loop.
