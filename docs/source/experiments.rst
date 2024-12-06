@@ -96,18 +96,20 @@ A single stage can also be fetched, and even visualized:
    val.visualize_sample()
 
 For architecture debugging purposes, you can also fetch the data with a
-downsampling for forcing balance between scoreres:
+downsampling for trimming scorers and leaving only the ones who scored
+the most patches:
 
 .. code:: python
 
-   train = get_stage_data(stage = Stage.TRAIN, batch_size=8, force_balance=True)
+   train = get_stage_data(stage = Stage.TRAIN, batch_size=8, trim_n_scorers=6)
 
 Output:
 
 .. code:: text
 
-   Loading train data with forced balance...
-   INFO:seg_tgce.data.crowd_seg.generator:Forced balance: limiting to 102 images per scorer.
+   Loading train data with trimmed scorers...
+   INFO:seg_tgce.data.crowd_seg.generator:Limiting dataset to only images scored by the top 6 scorers: ['MV', 'STAPLE', 'expert', 'NP6', 'NP10', 'NP3']
+   Train: 1272 batches, 10176 samples
 
 When running the ``visualize_sample`` method, the generator will load
 the images and masks from the disk and display them, with a result

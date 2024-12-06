@@ -10,10 +10,10 @@ def main() -> None:
     print(f"Val: {len(val)} batches, {len(val) * val.batch_size} samples")
     print(f"Test: {len(test)} batches, {len(test) * test.batch_size} samples")
 
-    print("Loading train data with forced balance...")
+    print("Loading train data with trimmed scorers...")
     train = ImageDataGenerator(
         batch_size=8,
-        force_balance=True,
+        trim_n_scorers=6,
     )
     print(f"Train: {len(train)} batches, {len(train) * train.batch_size} samples")
 

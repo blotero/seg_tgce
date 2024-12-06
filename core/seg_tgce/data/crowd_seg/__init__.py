@@ -11,7 +11,7 @@ def get_all_data(
     batch_size: int = 32,
     shuffle: bool = False,
     with_sparse_data: bool = False,
-    force_balance: bool = False,
+    trim_n_scorers: int | None = None,
 ) -> Tuple[ImageDataGenerator, ...]:
     """
     Retrieve all data generators for the crowd segmentation task.
@@ -24,7 +24,7 @@ def get_all_data(
             shuffle=shuffle,
             stage=stage,
             schema=DataSchema.MA_SPARSE if with_sparse_data else DataSchema.MA_RAW,
-            force_balance=force_balance,
+            trim_n_scorers=trim_n_scorers,
         )
         for stage in (Stage.TRAIN, Stage.VAL, Stage.TEST)
     )
