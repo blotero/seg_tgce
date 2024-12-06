@@ -55,10 +55,16 @@ class DataSchema(str, Enum):
     MA_SPARSE = "ma_sparse"
 
 
+def find_n_scorers(data: dict[str, dict[str, Any]], n: int) -> List[str]:
+    # return a list of length n with the scorers that scored the most images
+    scorers = sorted(data.keys(), key=lambda x: data[x]["total"], reverse=True)
+    return scorers[:n]
+
+
 def get_image_filenames(
-    image_dir: str, stage: Stage, *, force_balance: bool = False
+    image_dir: str, stage: Stage, *, trim_n_scorers: int | None
 ) -> List[str]:
-    if not force_balance:
+    if trim_n_scorers is None:
         return sorted(
             [
                 filename
@@ -70,11 +76,16 @@ def get_image_filenames(
     inverted_data_path = f"{METADATA_PATH}/{stage.name.lower()}_inverted.json"
     with open(inverted_data_path, "r", newline="", encoding="utf-8") as json_file:
         inverted_data: dict[str, Any] = json.load(json_file)
-        # determine `limit` as the lowest number of images scored by a scorer
-        limit = min(data["total"] for data in inverted_data.values())
-        LOGGER.info("Forced balance: limiting to %d images per scorer.", limit)
-        for scorer_data in inverted_data.values():
-            filenames.update(scorer_data["scored"][:limit])
+        # trim to n scorers which scored the most images:
+        trimmed_scorers = find_n_scorers(inverted_data, trim_n_scorers)
+
+        LOGGER.info(
+            "Limiting dataset to only images scored by the top %d scorers: %s",
+            trim_n_scorers,
+            trimmed_scorers,
+        )
+        for scorer in trimmed_scorers:
+            filenames.update(inverted_data[scorer]["scored"])
     return list(filenames)
 
 
@@ -93,7 +104,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
     - stage: Stage = Stage.TRAIN: Stage of the dataset.
     - paths: Optional[CustomPath] = None: Custom paths for image and mask directories.
     - schema: DataSchema = DataSchema.MA_RAW: Data schema for the dataset.
-    - force_balance: bool = False: Force balance the dataset by downsampling.
+    - trim_n_scorers: int | None = None: Trim and leave only top n scorers
 
     """
 
@@ -106,7 +117,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         stage: Stage = Stage.TRAIN,
         paths: Optional[CustomPath] = None,
         schema: DataSchema = DataSchema.MA_RAW,
-        force_balance: bool = False,
+        trim_n_scorers: int | None = None,
     ) -> None:
         if paths is not None:
             image_dir = paths["image_dir"]
@@ -121,7 +132,7 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.image_filenames = get_image_filenames(
-            image_dir, stage, force_balance=force_balance
+            image_dir, stage, trim_n_scorers=trim_n_scorers
         )
         self.scorers_tags = sorted(os.listdir(mask_dir))
         self.on_epoch_end()
@@ -131,7 +142,6 @@ class ImageDataGenerator(Sequence):  # pylint: disable=too-many-instance-attribu
             for filename in self.image_filenames
         }
         self.stage = stage
-        self.force_balance = force_balance
 
     @property
     def classes_definition(self) -> dict[int, str]:
