@@ -47,6 +47,13 @@ Additionally, for formatting code, you can use ``isort`` and ``black``:
    black seg_tgce
    isort --profile=black seg_tgce
 
+Finally, the package can be built and published to pypi with:
+
+.. code:: bash
+
+   poetry build
+   poetry publish
+
 ******
  Docs
 ******
