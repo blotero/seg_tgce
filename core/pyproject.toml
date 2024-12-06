@@ -1,7 +1,7 @@
 [project]
 description = "Framework for handling image segmentation in the context of multiple annotators"
 name = "seg_tgce"
-version = "0.1.8"
+version = "0.1.9"
 readme = "README.md"
 authors = [{ name = "Brandon Lotero", email = "blotero@gmail.com" }]
 maintainers = [{ name = "Brandon Lotero", email = "blotero@gmail.com" }]
@@ -15,7 +15,7 @@ Issues = "https://github.com/blotero/seg_tgce/issues"
 
 [tool.poetry]
 name = "seg_tgce"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Brandon Lotero <blotero@gmail.com>"]
 description = "A package for the SEG TGCE project"
 readme = "README.md"
@@ -28,7 +28,7 @@ repository = "https://github.com/blotero/seg_tgce"
 
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.10,<3.12"
 numpy = "^1.26.4"
 keras = "2.15.0"
 tensorflow = "2.15.1"
