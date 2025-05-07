@@ -14,5 +14,6 @@
     }
   },
   "isort.args": ["--profile", "black"],
-  "isort.path": ["~/.env/python", "-m", "isort"]
+  "isort.path": ["~/.env/python", "-m", "isort"],
+  "workbench.colorTheme": "Gruvbox Dark Hard"
 }

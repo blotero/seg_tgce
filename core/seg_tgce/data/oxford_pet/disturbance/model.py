@@ -1,10 +1,40 @@
 import os
 from enum import Enum
 
-import gdown  # type:ignore
 import numpy as np
+import requests
+import tensorflow as tf
 from keras.layers import Conv2D, Layer, UpSampling2D
 from keras.models import Model, load_model
+from keras.saving import register_keras_serializable
+
+MODEL_PUBLIC_URL = "https://brandon-ai-models.s3.us-east-1.amazonaws.com/oxford_pet_seg_2025_05_06.keras"
+
+
+@register_keras_serializable()
+class ResizeToInput(Layer):
+    def __init__(self, method="bilinear", **kwargs):
+        super().__init__(**kwargs)
+        self.method = method
+
+    def call(self, inputs):
+        x, reference = inputs
+        target_size = tf.shape(reference)[1:3]
+        return tf.image.resize(x, target_size, method=self.method)
+
+    def compute_output_shape(self, input_shapes):
+        # We can't infer exact shape, so return shape based on reference input
+        return (
+            input_shapes[1][0],
+            input_shapes[1][1],
+            input_shapes[1][2],
+            input_shapes[0][-1],
+        )
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({"method": self.method})
+        return config
 
 
 def compute_snr(signal: float | np.ndarray, noise_std: float) -> float:
@@ -56,7 +86,12 @@ def produce_disturbed_models(
     models: list[Model] = []
 
     for value in snr_value_list:
-        model_: Model = load_model(base_model_path, compile=False)
+        model_: Model = load_model(
+            base_model_path,
+            compile=False,
+            safe_mode=False,
+            custom_objects={"ResizeToInput": ResizeToInput},
+        )
         snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
         snr_measured_values.append(snr)
         models.append(model_)
@@ -64,16 +99,18 @@ def produce_disturbed_models(
 
 
 def download_base_model() -> str:
-    model_file_id = "1x39L3QNDMye1SJhKh1gf4YS-HRFLTs6G"
-    gdown.download(id=model_file_id, quiet=False)
-    model_extension = "keras"
-    paths = []
+    destination = MODEL_PUBLIC_URL.split("/")[-1]
 
-    for file in os.listdir("."):
-        if file.endswith(model_extension):
-            paths.append(file)
+    if os.path.exists(destination):
+        return destination
 
-    return os.path.abspath(paths[0])
+    response = requests.get(MODEL_PUBLIC_URL, stream=True)
+    response.raise_for_status()
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    return destination
 
 
 def find_last_encoder_conv_layer(model: Model) -> Layer:

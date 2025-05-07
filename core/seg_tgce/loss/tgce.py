@@ -31,36 +31,22 @@ class TcgeSs(Loss):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         *,
-        train_annotators: int,
-        val_annotators: int,
         num_classes: int,
         name: str = "TGCE_SS",
         q: float = 0.1,
         gamma: float = 0.1,
     ) -> None:
         self.q = q
-        self.train_annotators = train_annotators
-        self.val_annotators = val_annotators
         self.num_classes = num_classes
         self.gamma = gamma
-        self.stage = "train"
         super().__init__(name=name)
 
     def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-        # A stateless approach here would be much more desirable
-        # but the stage is a mutable attribute and cannot be passed to the call method
-        # since the heritable methods are not called with the stage argument.
-        # Future research should be done to find a better way to handle this.
-
-        match self.stage:
-            case "train":
-                num_scorers = self.train_annotators
-            case "val":
-                num_scorers = self.val_annotators
-            case _:
-                raise ValueError(f"Invalid stage: {self.stage}")
         y_true = cast(y_true, TARGET_DATA_TYPE)
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
+
+        # Infer number of scorers from the input tensor shape
+        num_scorers = tf.shape(y_pred)[-1] - self.num_classes
 
         y_pred = y_pred[..., : self.num_classes + num_scorers]
 

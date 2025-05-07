@@ -1,6 +1,7 @@
 from functools import partial
 from typing import Tuple
 
+import pydot
 from keras.initializers import GlorotUniform
 from keras.layers import (
     BatchNormalization,
@@ -13,6 +14,7 @@ from keras.layers import (
 )
 from keras.models import Model
 from keras.utils import get_custom_objects
+from tensorflow.keras.utils import model_to_dot
 
 from seg_tgce.layers import SparseSoftmax
 
@@ -172,3 +174,12 @@ def bayesian_unet_tgce(  # pylint: disable=too-many-arguments, too-many-locals
     y = Concatenate()([xy, x_lambda, xyy])
 
     return Model(input_layer, y, name=name)
+
+
+if __name__ == "__main__":
+    model = unet_tgce((512, 512, 3))
+    model.summary()
+    dot_graph = model_to_dot(model, show_shapes=True, show_layer_names=True)
+
+    graph = pydot.graph_from_dot_data(dot_graph.to_string())[0]
+    graph.write_png("model_architecture.png")
