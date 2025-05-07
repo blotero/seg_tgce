@@ -1,4 +1,5 @@
 .env
+.venv
 *.keras
 .mypy_cache
 **/__pycache__

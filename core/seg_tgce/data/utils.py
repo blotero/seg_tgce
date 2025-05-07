@@ -14,10 +14,6 @@ def disturb_mask(
     return tf.image.resize(model(tf.image.resize(image, model_shape)), target_shape)
 
 
-def mix_channels(mask: Tensor) -> Tensor:
-    return tf.stack([mask, 1 - mask], axis=-2)
-
-
 def add_noisy_annotators(
     img: Tensor,
     models: list[Tensor],
@@ -63,19 +59,6 @@ def map_dataset_multiple_annotators(
                 target_shape=target_shape,
             ),
         ),
-        num_parallel_calls=tf.data.AUTOTUNE,
-    )
-
-    dataset_ = dataset_.map(
-        lambda img, mask: (
-            img,
-            tf.reshape(mask, (mask.shape[0], mask.shape[1], 1, mask.shape[-1])),
-        ),
-        num_parallel_calls=tf.data.AUTOTUNE,
-    )
-
-    dataset_ = dataset_.map(
-        lambda img, mask: (img, mix_channels(mask)),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 

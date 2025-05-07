@@ -1,15 +1,7 @@
-from typing import List
-
 import numpy as np
 import tensorflow as tf
-from keras.models import Model, load_model
 from keras.optimizers import Adam
 
-from seg_tgce.data.oxford_pet.disturbance.model import (
-    download_base_model,
-    find_last_encoder_conv_layer,
-    produce_disturbed_models,
-)
 from seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
 from seg_tgce.loss.tgce import TcgeSs
 from seg_tgce.metrics.dice_coefficient import DiceCoefficient
@@ -25,19 +17,6 @@ from seg_tgce.run.runner import (
     SessionPartialResults,
     SessionResults,
 )
-
-
-def fetch_models(noise_levels_snr: list[float]) -> List[Model]:
-    model_path = download_base_model()
-    model_ann = load_model(model_path, compile=False)
-
-    last_conv_encoder_layer = find_last_encoder_conv_layer(model_ann)
-
-    disturbance_models, measured_snr_values = produce_disturbed_models(
-        noise_levels_snr, model_path, last_conv_encoder_layer
-    )
-    print(f"Measured snr values from produced models: {measured_snr_values}")
-    return disturbance_models
 
 
 class OxfordMARunner(Runner):
@@ -71,9 +50,7 @@ class OxfordMARunner(Runner):
             model_name = f"UNET-TGCE_SS_gamma_{entropy_gamma}"
             loss_fn = TcgeSs(
                 q=0.1,
-                train_annotators=self.params.num_annotators,
                 gamma=entropy_gamma,
-                val_annotators=self.params.num_annotators,
                 num_classes=2,
             )
             dice_fn = DiceCoefficient()
