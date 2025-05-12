@@ -2,8 +2,11 @@ import numpy as np
 import tensorflow as tf
 from keras.optimizers import Adam
 
-from seg_tgce.data.oxford_pet.oxford_pet import get_data_multiple_annotators
-from seg_tgce.loss.tgce import TcgeSs
+from seg_tgce.data.oxford_pet.oxford_pet import (
+    fetch_models,
+    get_data_multiple_annotators,
+)
+from seg_tgce.loss.tgce import TcgeScalar
 from seg_tgce.metrics.dice_coefficient import DiceCoefficient
 from seg_tgce.models.unet import unet_tgce
 from seg_tgce.run.oxford_ma_runner.model_result import ModelResult
@@ -48,7 +51,7 @@ class OxfordMARunner(Runner):
             print(f"========== Entropy Gamma: {entropy_gamma} ==========")
             optimizer = Adam()
             model_name = f"UNET-TGCE_SS_gamma_{entropy_gamma}"
-            loss_fn = TcgeSs(
+            loss_fn = TcgeScalar(
                 q=0.1,
                 gamma=entropy_gamma,
                 num_classes=2,
@@ -61,11 +64,11 @@ class OxfordMARunner(Runner):
 
             model = unet_tgce(
                 input_shape=self.params.target_img_shape + (3,),
-                out_channels=2,
+                n_classes=3,
                 n_scorers=self.params.num_annotators,
                 name=model_name,
             )
-            model.compile(loss=loss_fn, metrics=dice_fn, optimizer=optimizer)
+            model.compile(loss=loss_fn, metrics=[dice_fn], optimizer=optimizer)
 
             for epoch in range(self.params.n_epochs):
                 print(f"Epoch {epoch+1}/{self.params.n_epochs}")

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import tensorflow as tf
 from keras.losses import Loss
@@ -6,6 +6,8 @@ from tensorflow import Tensor, cast
 from tensorflow import float32 as tf_float32
 
 TARGET_DATA_TYPE = tf_float32
+
+ReliabilityType = Literal["scalar", "features", "pixel"]
 
 
 def safe_divide(
@@ -17,12 +19,16 @@ def safe_divide(
     )
 
 
-def stable_pow(x: Tensor, p: Tensor, epsilon: float = 1e-8) -> Tensor:
+def safe_pow(x: Tensor, p: Tensor, epsilon: float = 1e-8) -> Tensor:
     """Compute x^p safely by ensuring x is within a valid range."""
     return tf.pow(tf.clip_by_value(x, epsilon, 1.0 - epsilon), p)
 
 
-class TcgeSs(Loss):
+#   elif self.reliability_type == "features":
+# lambda_r = tf.image.resize(lambda_r, tf.shape(y_pred)[1:3])
+
+
+class TcgeScalar(Loss):
     """
     Truncated generalized cross entropy
     for semantic segmentation loss.
@@ -34,77 +40,70 @@ class TcgeSs(Loss):
         num_classes: int,
         name: str = "TGCE_SS",
         q: float = 0.1,
-        gamma: float = 0.1,
+        noise_tolerance: float = 0.1,
+        lambda_reg_weight: float = 0.1,  # Weight for lambda regularization
+        lambda_entropy_weight: float = 0.1,  # Weight for entropy regularization
+        epsilon: float = 1e-8,  # Small constant for numerical stability
     ) -> None:
         self.q = q
         self.num_classes = num_classes
-        self.gamma = gamma
+        self.noise_tolerance = noise_tolerance
+        self.lambda_reg_weight = lambda_reg_weight
+        self.lambda_entropy_weight = lambda_entropy_weight
+        self.epsilon = epsilon
         super().__init__(name=name)
 
-    def call(self, y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-        y_true = cast(y_true, TARGET_DATA_TYPE)
-        y_pred = cast(y_pred, TARGET_DATA_TYPE)
+    def call(
+        self, y_true: tf.Tensor, y_pred: tf.Tensor, lambda_r: tf.Tensor
+    ) -> tf.Tensor:
+        # Ensure inputs are in valid ranges
+        y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
+        lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
 
-        # Infer number of scorers from the input tensor shape
-        num_scorers = tf.shape(y_pred)[-1] - self.num_classes
+        # Expand y_pred to match y_true's shape for multiplication
+        y_pred_exp = tf.expand_dims(y_pred, axis=-1)
+        y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
 
-        y_pred = y_pred[..., : self.num_classes + num_scorers]
+        # Reshape lambda_r to match spatial dimensions
+        lambda_r = tf.expand_dims(tf.expand_dims(lambda_r, 1), 1)
+        lambda_r = tf.tile(lambda_r, [1, tf.shape(y_pred)[1], tf.shape(y_pred)[2], 1])
 
-        y_true_shape = tf.shape(y_true)
-
-        new_shape = tf.concat(
-            [y_true_shape[:-2], [self.num_classes, num_scorers]], axis=0
-        )
-        y_true = tf.reshape(y_true, new_shape)
-
-        lambda_r = y_pred[..., self.num_classes :]
-        y_pred_ = y_pred[..., : self.num_classes]
-
-        n_samples = tf.shape(y_pred_)[0]
-        width = tf.shape(y_pred_)[1]
-        height = tf.shape(y_pred_)[2]
-
-        y_pred_ = y_pred_[..., tf.newaxis]
-        y_pred_ = tf.repeat(y_pred_, repeats=[num_scorers], axis=-1)
-
-        epsilon = 1e-8
-        y_pred_ = tf.clip_by_value(y_pred_, epsilon, 1.0 - epsilon)
-
-        term_r = tf.math.reduce_mean(
-            tf.math.multiply(
-                y_true,
-                safe_divide(
-                    (
-                        tf.ones(
-                            [n_samples, width, height, self.num_classes, num_scorers]
-                        )
-                        - stable_pow(y_pred_, self.q)
-                    ),
-                    (self.q + epsilon),
-                ),
-            ),
-            axis=-2,
+        # Get predicted probability of each scorer's label
+        correct_probs = tf.reduce_sum(y_true * y_pred_exp, axis=-2)  # [B, H, W, S]
+        correct_probs = tf.clip_by_value(
+            correct_probs, self.epsilon, 1.0 - self.epsilon
         )
 
-        term_c = tf.math.multiply(
-            tf.ones([n_samples, width, height, num_scorers]) - lambda_r,
-            safe_divide(
-                (
-                    tf.ones([n_samples, width, height, num_scorers])
-                    - stable_pow(
-                        (1 / self.num_classes)
-                        * tf.ones([n_samples, width, height, num_scorers]),
-                        self.q,
-                    )
-                ),
-                (self.q + epsilon),
-            ),
+        # Compute TGCE loss per scorer with numerical stability
+        term1 = (
+            lambda_r * (1.0 - tf.pow(correct_probs, self.q)) / (self.q + self.epsilon)
+        )
+        term2 = (1.0 - lambda_r) * (
+            (1.0 - tf.pow(self.noise_tolerance, self.q)) / (self.q + self.epsilon)
         )
 
-        loss = tf.math.reduce_mean(tf.math.multiply(lambda_r, term_r) + term_c)
-        loss = tf.where(tf.math.is_nan(loss), tf.constant(1e-8), loss)
+        # Add regularization terms with numerical stability
+        # 1. L2 regularization to prevent extreme values
+        lambda_reg = self.lambda_reg_weight * tf.reduce_mean(tf.square(lambda_r - 0.5))
 
-        return loss
+        # 2. Entropy regularization to encourage meaningful values
+        # Use log1p for better numerical stability
+        lambda_entropy = -self.lambda_entropy_weight * tf.reduce_mean(
+            lambda_r * tf.math.log1p(lambda_r)
+            + (1 - lambda_r) * tf.math.log1p(1 - lambda_r)
+        )
+
+        # Combine terms and ensure no NaN values
+        total_loss = tf.reduce_mean(term1 + term2) + lambda_reg + lambda_entropy
+
+        # Replace any NaN values with a large constant
+        total_loss = tf.where(
+            tf.math.is_nan(total_loss),
+            tf.constant(1e6, dtype=total_loss.dtype),
+            total_loss,
+        )
+
+        return total_loss
 
     def get_config(
         self,
@@ -113,4 +112,10 @@ class TcgeSs(Loss):
         Retrieves loss configuration.
         """
         base_config = super().get_config()
-        return {**base_config, "q": self.q}
+        return {
+            **base_config,
+            "q": self.q,
+            "lambda_reg_weight": self.lambda_reg_weight,
+            "lambda_entropy_weight": self.lambda_entropy_weight,
+            "epsilon": self.epsilon,
+        }

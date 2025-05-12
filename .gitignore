@@ -9,3 +9,4 @@ docs/build
 notebooks/**/.ipynb_checkpoints
 core/dist
 __data__
+**/results/**
