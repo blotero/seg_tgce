@@ -23,7 +23,6 @@ class ResizeToInput(Layer):
         return tf.image.resize(x, target_size, method=self.method)
 
     def compute_output_shape(self, input_shapes):
-        # We can't infer exact shape, so return shape based on reference input
         return (
             input_shapes[1][0],
             input_shapes[1][1],

@@ -8,7 +8,10 @@ from seg_tgce.data.oxford_pet.disturbance.model import (
     find_last_encoder_conv_layer,
     produce_disturbed_models,
 )
-from seg_tgce.data.utils import map_dataset_multiple_annotators
+from seg_tgce.data.utils import (
+    LabelerAssignmentManager,
+    map_dataset_multiple_annotators,
+)
 
 from .oxford_iiit_pet import OxfordIiitPet
 
@@ -37,9 +40,44 @@ def get_data_multiple_annotators(
     annotation_models: list[Model],
     target_shape: tuple[int, int] = (256, 256),
     batch_size: int = 32,
+    labeling_rate: float = 0.7,
 ) -> tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
+    """
+    Get datasets with multiple annotators and optional labeler assignments.
+
+    Args:
+        annotation_models: List of models to generate noisy annotations
+        target_shape: Target shape for images and masks
+        batch_size: Batch size for the datasets
+        labeling_rate: Probability that a labeler will label a sample (default: 0.7)
+    """
     dataset = OxfordIiitPet()
     train_dataset, val_dataset, test_dataset = dataset()
+
+    # Get dataset sizes
+    train_size = sum(1 for _ in train_dataset)
+    val_size = sum(1 for _ in val_dataset)
+    test_size = sum(1 for _ in test_dataset)
+
+    train_labeler_manager = LabelerAssignmentManager(
+        num_samples=train_size,
+        num_labelers=len(annotation_models),
+        labeling_rate=labeling_rate,
+        seed=42,
+    )
+    val_labeler_manager = LabelerAssignmentManager(
+        num_samples=val_size,
+        num_labelers=len(annotation_models),
+        labeling_rate=labeling_rate,
+        seed=43,
+    )
+    test_labeler_manager = LabelerAssignmentManager(
+        num_samples=test_size,
+        num_labelers=len(annotation_models),
+        labeling_rate=labeling_rate,
+        seed=44,
+    )
+
     train_data, val_data, test_data = (
         map_dataset_multiple_annotators(
             dataset=data,
@@ -47,8 +85,13 @@ def get_data_multiple_annotators(
             model_shape=MODEL_ORIGINAL_SHAPE,
             batch_size=batch_size,
             disturbance_models=annotation_models,
+            labeler_manager=labeler_manager,
         )
-        for data in (train_dataset, val_dataset, test_dataset)
+        for data, labeler_manager in (
+            (train_dataset, train_labeler_manager),
+            (val_dataset, val_labeler_manager),
+            (test_dataset, test_labeler_manager),
+        )
     )
     return train_data, val_data, test_data
 
@@ -57,7 +100,7 @@ def visualize_data(
     dataset: tf.data.Dataset,
     num_samples: int = 4,
     batch_index: int = 0,
-    show_annotators: bool = True,
+    noise_levels: list[float] = [],
     save_path: str | None = None,
 ) -> None:
     """
@@ -67,65 +110,54 @@ def visualize_data(
         dataset: TensorFlow dataset containing images and masks
         num_samples: Number of samples to visualize (default: 4)
         batch_index: Index of the batch to visualize (default: 0)
-        show_annotators: Whether to show multiple annotator masks if available (default: True)
         save_path: Path to save the figure (default: None, which shows the figure interactively)
     """
-    # Get a batch of data
     for i, (images, masks) in enumerate(dataset):
         if i == batch_index:
             break
+    print(f"Image shape: {images.shape}")
+    print(f"Mask shape: {masks.shape}")
 
-    # Get the actual number of annotators from the masks tensor
-    num_annotators = masks.shape[-1] - 1  # Subtract 1 for ground truth
+    num_annotators = masks.shape[-1]
+    num_classes = masks.shape[-2]  # Get number of classes from one-hot encoding
 
-    # Calculate number of columns needed
-    num_columns = 2  # Image + ground truth
-    if show_annotators and num_annotators > 0:
-        num_columns += num_annotators  # Add columns for each annotator
+    num_columns = num_annotators + 1
 
-    # Create figure with subplots
     fig, axes = plt.subplots(
         num_samples, num_columns, figsize=(3 * num_columns, 3 * num_samples)
     )
     if num_samples == 1:
         axes = axes.reshape(1, -1)
 
-    # Define class colors for visualization
     class_colors = {
-        0: "#440154",  # Background
-        1: "#414487",  # Pet
+        -1: "#000000",  # Unlabeled
+        0: "#b31051",  # Pet
+        1: "#440154",  # Background
         2: "#2a788e",  # Border
     }
 
     # Convert hex colors to RGB
-    colors = [plt.cm.colors.to_rgb(class_colors[i]) for i in range(3)]
+    colors = [plt.cm.colors.to_rgb(color) for color in class_colors.values()]
     cmap = plt.cm.colors.ListedColormap(colors)
 
     for i in range(num_samples):
         if i >= len(images):
             break
 
-        # Show original image
         axes[i, 0].imshow(images[i])
         axes[i, 0].set_title(f"Image {i}")
         axes[i, 0].axis("off")
 
-        # Show ground truth mask
-        axes[i, 1].imshow(masks[i, :, :, 0], cmap=cmap, vmin=0, vmax=2)
-        axes[i, 1].set_title("Ground Truth Mask")
-        axes[i, 1].axis("off")
-
-        # Show all annotator masks if available and requested
-        if show_annotators and num_annotators > 0:
-            for j in range(num_annotators - 1):
-                axes[i, j + 2].imshow(masks[i, :, :, j + 1], cmap=cmap, vmin=0, vmax=2)
-                axes[i, j + 2].set_title(f"Annotator {j + 1} Mask")
-                axes[i, j + 2].axis("off")
-
-    # Add colorbar
-    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-    cbar = fig.colorbar(plt.cm.ScalarMappable(cmap=cmap), cax=cbar_ax, ticks=[0, 1, 2])
-    cbar.set_ticklabels(["Background", "Pet", "Border"])
+        for j in range(num_annotators):
+            # Convert one-hot encoded mask to class indices
+            mask_class = tf.argmax(masks[i, :, :, :, j], axis=-1)
+            print(f"Mask class shape: {mask_class.shape}")
+            # if class is all zeroes, set to -1
+            mask_class = tf.where(tf.reduce_all(mask_class == 0), -1, mask_class)
+            axes[i, j + 1].imshow(mask_class, cmap=cmap, vmin=-1, vmax=num_classes - 1)
+            if i == 0:
+                axes[i, j + 1].set_title(f"Ann {j + 1} (SNR: {noise_levels[j]}dB)")
+            axes[i, j + 1].axis("off")
 
     plt.tight_layout()
     if save_path:
@@ -136,27 +168,20 @@ def visualize_data(
 
 
 if __name__ == "__main__":
-    noise_levels_snr = [-20.0, -10.0, 0.0, 10.0]
+    noise_levels_snr = [-20.0, -13.0, 10.0]
 
     disturbance_models = fetch_models(noise_levels_snr)
     train_data, val_data, test_data = get_data_multiple_annotators(
         annotation_models=disturbance_models,
         target_shape=(256, 256),
-        batch_size=4,
+        batch_size=8,
     )
 
     print("Visualizing training data samples...")
     visualize_data(
         train_data,
-        num_samples=4,
+        num_samples=5,
         batch_index=0,
-        show_annotators=True,
-    )
-
-    print("\nVisualizing validation data samples...")
-    visualize_data(
-        val_data,
-        num_samples=4,
-        batch_index=0,
-        show_annotators=True,
+        noise_levels=noise_levels_snr,
+        save_path="oxford_pet_training_data.png",
     )

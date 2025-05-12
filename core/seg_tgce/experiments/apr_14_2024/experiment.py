@@ -8,7 +8,7 @@ from seg_tgce.run.runner import RunningSessionParams
 runner = OxfordMARunner(
     params=RunningSessionParams(
         n_epochs=50,
-        target_img_shape=(256, 256),
+        target_img_shape=(512, 512),
         batch_size=32,
         num_annotators=4,
         extra={
