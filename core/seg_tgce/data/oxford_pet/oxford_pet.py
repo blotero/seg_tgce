@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import tensorflow as tf
 from keras.models import Model, load_model
 
@@ -110,13 +111,15 @@ def visualize_data(
         dataset: TensorFlow dataset containing images and masks
         num_samples: Number of samples to visualize (default: 4)
         batch_index: Index of the batch to visualize (default: 0)
+        noise_levels: List of noise levels for each annotator
         save_path: Path to save the figure (default: None, which shows the figure interactively)
     """
-    for i, (images, masks) in enumerate(dataset):
+    for i, (images, masks, labeler_mask) in enumerate(dataset):
         if i == batch_index:
             break
     print(f"Image shape: {images.shape}")
     print(f"Mask shape: {masks.shape}")
+    print(f"Labeler mask shape: {labeler_mask.shape}")
 
     num_annotators = masks.shape[-1]
     num_classes = masks.shape[-2]  # Get number of classes from one-hot encoding
@@ -149,14 +152,21 @@ def visualize_data(
         axes[i, 0].axis("off")
 
         for j in range(num_annotators):
-            # Convert one-hot encoded mask to class indices
-            mask_class = tf.argmax(masks[i, :, :, :, j], axis=-1)
-            print(f"Mask class shape: {mask_class.shape}")
-            # if class is all zeroes, set to -1
-            mask_class = tf.where(tf.reduce_all(mask_class == 0), -1, mask_class)
-            axes[i, j + 1].imshow(mask_class, cmap=cmap, vmin=-1, vmax=num_classes - 1)
-            if i == 0:
-                axes[i, j + 1].set_title(f"Ann {j + 1} (SNR: {noise_levels[j]}dB)")
+            if labeler_mask[i, j] == 1:  # Only show masks for assigned labelers
+                # Convert one-hot encoded mask to class indices
+                mask_class = tf.argmax(masks[i, :, :, :, j], axis=-1)
+                # if class is all zeroes, set to -1
+                mask_class = tf.where(tf.reduce_all(mask_class == 0), -1, mask_class)
+                axes[i, j + 1].imshow(
+                    mask_class, cmap=cmap, vmin=-1, vmax=num_classes - 1
+                )
+                if i == 0:
+                    axes[i, j + 1].set_title(f"Ann {j + 1} (SNR: {noise_levels[j]}dB)")
+            else:
+                # Show blank image for unassigned labelers
+                axes[i, j + 1].imshow(np.zeros(masks.shape[1:3]), cmap="gray")
+                if i == 0:
+                    axes[i, j + 1].set_title(f"Ann {j + 1} (Unassigned)")
             axes[i, j + 1].axis("off")
 
     plt.tight_layout()
@@ -168,7 +178,7 @@ def visualize_data(
 
 
 if __name__ == "__main__":
-    noise_levels_snr = [-20.0, -13.0, 10.0]
+    noise_levels_snr = [-20.0, -13.0, 10.0, 20.0]
 
     disturbance_models = fetch_models(noise_levels_snr)
     train_data, val_data, test_data = get_data_multiple_annotators(

@@ -1,6 +1,7 @@
 import os
 from enum import Enum
 
+import boto3
 import numpy as np
 import requests
 import tensorflow as tf
@@ -120,3 +121,37 @@ def find_last_encoder_conv_layer(model: Model) -> Layer:
         if isinstance(layer, UpSampling2D):
             break
     return last_conv_encoder_layer
+
+
+def upload_model_to_s3(
+    model_path: str,
+    bucket_name: str,
+    s3_key: str,
+    aws_access_key_id: str | None = None,
+    aws_secret_access_key: str | None = None,
+    region_name: str = "us-east-1",
+) -> str:
+    """
+    Upload a model file to an S3 bucket.
+
+    Args:
+        model_path: Local path to the model file
+        bucket_name: Name of the S3 bucket
+        s3_key: Key (path) where the file will be stored in S3
+        aws_access_key_id: AWS access key ID (optional if using environment variables)
+        aws_secret_access_key: AWS secret access key (optional if using environment variables)
+        region_name: AWS region name
+
+    Returns:
+        str: The S3 URL of the uploaded model
+    """
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=region_name,
+    )
+
+    s3_client.upload_file(model_path, bucket_name, s3_key)
+
+    return f"https://{bucket_name}.s3.{region_name}.amazonaws.com/{s3_key}"
