@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -169,12 +169,13 @@ def map_dataset_multiple_annotators(
             lambda img, masks, labeler_mask: (
                 img,
                 tf.multiply(masks, tf.reshape(labeler_mask, [1, 1, 1, -1])),
+                labeler_mask,
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
     else:
         dataset_ = dataset_.map(
-            lambda img, mask: (
+            lambda img, mask, labeler_mask: (
                 img,
                 add_noisy_annotators(
                     tf.expand_dims(img, 0),
@@ -182,12 +183,17 @@ def map_dataset_multiple_annotators(
                     model_shape=model_shape,
                     target_shape=target_shape,
                 ),
+                labeler_mask,
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
 
     dataset_ = dataset_.map(
-        lambda img, mask: (img, tf.squeeze(mask, axis=2)),
+        lambda img, mask, labeler_mask: (
+            img,
+            tf.squeeze(mask, axis=2),
+            labeler_mask,
+        ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
 

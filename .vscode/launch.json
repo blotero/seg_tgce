@@ -19,7 +19,73 @@
             "name": "Poetry: Oxford pet scalar experiment",
             "type": "debugpy",
             "request": "launch",
-            "module": "seg_tgce.experiments.scalar",
+            "module": "seg_tgce.experiments.pets.scalar",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Oxford pet features experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.pets.features",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Oxford pet pixel experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.pets.pixel",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Histology scalar experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.histology.scalar",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Histology features experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.histology.features",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Histology pixel experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.histology.pixel",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Crowd seg",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.data.crowd_seg.__main__",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
@@ -31,6 +97,28 @@
             "type": "debugpy",
             "request": "launch",
             "module": "seg_tgce.models.unet",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Majority voting",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.pets.mv",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Staple",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.pets.staple",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {

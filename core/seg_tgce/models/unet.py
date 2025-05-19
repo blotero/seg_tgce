@@ -8,6 +8,7 @@ from keras.layers import (
     BatchNormalization,
     Concatenate,
     Conv2D,
+    Conv2DTranspose,
     Dense,
     Dropout,
     GlobalAveragePooling2D,
@@ -95,45 +96,88 @@ def build_backbone_encoder(input_shape):
 def build_decoder(
     x: Layer, level_1: Layer, level_2: Layer, level_3: Layer, level_4: Layer
 ) -> Layer:
-    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(89), name="Conv50")(x)
+    # Initial bottleneck processing
+    x = DefaultConv2D(256, kernel_initializer=kernel_initializer(89), name="Conv50")(x)
     x = BatchNormalization(name="Batch50")(x)
-    x = Dropout(0.3, name="Dropout50")(x)
-    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(42), name="Conv51")(x)
+    x = Dropout(0.2, name="Dropout50")(x)
+    x = DefaultConv2D(256, kernel_initializer=kernel_initializer(42), name="Conv51")(x)
     x = BatchNormalization(name="Batch51")(x)
-    x = Dropout(0.3, name="Dropout51")(x)
-    x = UpSample(name="Up60")(x)  # 8x8 -> 16x16
+    x = Dropout(0.2, name="Dropout51")(x)
+
+    # Upsampling blocks with transposed convolutions
+    x = Conv2DTranspose(
+        128,
+        kernel_size=2,
+        strides=2,
+        padding="same",
+        kernel_initializer=kernel_initializer(91),
+        name="Up60",
+    )(x)
     x = Concatenate(name="Concat60")([level_4, x])
-    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(91), name="Conv60")(x)
+    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(91), name="Conv60")(x)
     x = BatchNormalization(name="Batch60")(x)
-    x = Dropout(0.3, name="Dropout60")(x)
-    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(47), name="Conv61")(x)
+    x = Dropout(0.2, name="Dropout60")(x)
+    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(47), name="Conv61")(x)
     x = BatchNormalization(name="Batch61")(x)
-    x = Dropout(0.3, name="Dropout61")(x)
-    x = UpSample(name="Up70")(x)  # 16x16 -> 32x32
+    x = Dropout(0.2, name="Dropout61")(x)
+
+    x = Conv2DTranspose(
+        64,
+        kernel_size=2,
+        strides=2,
+        padding="same",
+        kernel_initializer=kernel_initializer(21),
+        name="Up70",
+    )(x)
     x = Concatenate(name="Concat70")([level_3, x])
-    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(21), name="Conv70")(x)
+    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(21), name="Conv70")(x)
     x = BatchNormalization(name="Batch70")(x)
-    x = Dropout(0.3, name="Dropout70")(x)
-    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(96), name="Conv71")(x)
+    x = Dropout(0.2, name="Dropout70")(x)
+    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(96), name="Conv71")(x)
     x = BatchNormalization(name="Batch71")(x)
-    x = Dropout(0.3, name="Dropout71")(x)
-    x = UpSample(name="Up80")(x)  # 32x32 -> 64x64
+    x = Dropout(0.2, name="Dropout71")(x)
+
+    x = Conv2DTranspose(
+        32,
+        kernel_size=2,
+        strides=2,
+        padding="same",
+        kernel_initializer=kernel_initializer(96),
+        name="Up80",
+    )(x)
     x = Concatenate(name="Concat80")([level_2, x])
-    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(96), name="Conv80")(x)
+    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(96), name="Conv80")(x)
     x = BatchNormalization(name="Batch80")(x)
-    x = Dropout(0.3, name="Dropout80")(x)
-    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(98), name="Conv81")(x)
+    x = Dropout(0.2, name="Dropout80")(x)
+    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(98), name="Conv81")(x)
     x = BatchNormalization(name="Batch81")(x)
-    x = Dropout(0.3, name="Dropout81")(x)
-    x = UpSample(name="Up90")(x)  # 64x64 -> 128x128
+    x = Dropout(0.2, name="Dropout81")(x)
+
+    x = Conv2DTranspose(
+        16,
+        kernel_size=2,
+        strides=2,
+        padding="same",
+        kernel_initializer=kernel_initializer(35),
+        name="Up90",
+    )(x)
     x = Concatenate(name="Concat90")([level_1, x])
-    x = DefaultConv2D(8, kernel_initializer=kernel_initializer(35), name="Conv90")(x)
+    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(35), name="Conv90")(x)
     x = BatchNormalization(name="Batch90")(x)
-    x = Dropout(0.3, name="Dropout90")(x)
-    x = DefaultConv2D(8, kernel_initializer=kernel_initializer(7), name="Conv91")(x)
+    x = Dropout(0.2, name="Dropout90")(x)
+    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(7), name="Conv91")(x)
     x = BatchNormalization(name="Batch91")(x)
-    x = Dropout(0.3, name="Dropout91")(x)
-    x = UpSample(name="Up92")(x)
+    x = Dropout(0.2, name="Dropout91")(x)
+
+    # Final upsampling to match input size
+    x = Conv2DTranspose(
+        8,
+        kernel_size=2,
+        strides=2,
+        padding="same",
+        kernel_initializer=kernel_initializer(7),
+        name="Up92",
+    )(x)
     return x
 
 

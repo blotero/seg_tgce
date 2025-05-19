@@ -5,7 +5,7 @@ from keras.losses import Loss
 from keras.saving import register_keras_serializable
 from tensorflow import Tensor, cast, gather
 
-from seg_tgce.data.crowd_seg.metrics import TARGET_DATA_TYPE
+TARGET_DATA_TYPE = tf.float32
 
 
 @register_keras_serializable(package="MyLayers")
@@ -31,8 +31,7 @@ class DiceCoefficient(Loss):
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         y_true = cast(y_true, TARGET_DATA_TYPE)
         y_true = y_true[..., self.ground_truth_index]
-        y_pred_ = cast(y_pred, TARGET_DATA_TYPE)
-        y_pred = y_pred_[..., : self.num_classes]
+        y_pred = cast(y_pred, TARGET_DATA_TYPE)
         intersection = tf.reduce_sum(y_true * y_pred, axis=[1, 2])
         union = tf.reduce_sum(y_true, axis=[1, 2]) + tf.reduce_sum(y_pred, axis=[1, 2])
         dice_coef = (2.0 * intersection + self.smooth) / (union + self.smooth)
@@ -63,18 +62,19 @@ class JaccardCoefficient(Loss):
         smooth: float = 1e-5,
         target_class: Optional[int] = None,
         name: str = "JaccardCoefficient",
+        ground_truth_index: int = 0,
         **kwargs
     ):
         self.smooth = smooth
         self.target_class = target_class
         self.num_classes = num_classes
+        self.ground_truth_index = ground_truth_index
         super().__init__(name=name, **kwargs)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
-        y_true = tf.cast(y_true, dtype=tf.float32)
-        y_true = tf.squeeze(y_true[..., :-1], axis=-1)
-        y_pred = tf.cast(y_pred, dtype=tf.float32)
-        y_pred = y_pred[..., : self.num_classes]
+        y_true = cast(y_true, TARGET_DATA_TYPE)
+        y_true = y_true[..., self.ground_truth_index]
+        y_pred = cast(y_pred, TARGET_DATA_TYPE)
 
         intersection = tf.reduce_sum(y_true * y_pred, axis=[1, 2])
         total = tf.reduce_sum(y_true + y_pred, axis=[1, 2])

@@ -10,3 +10,4 @@ notebooks/**/.ipynb_checkpoints
 core/dist
 __data__
 **/results/**
+tuner_results/
