@@ -14,10 +14,9 @@ from seg_tgce.models.unet import unet_tgce_features
 
 TARGET_SHAPE = (64, 64)
 BATCH_SIZE = 64
-NUM_CLASSES = 6  # From CLASSES_DEFINITION in generator.py
+NUM_CLASSES = 6
 TRAIN_EPOCHS = 50
 TUNER_EPOCHS = 10
-GROUND_TRUTH_INDEX = -1  # "Other" class
 
 
 def build_model(hp):
@@ -47,13 +46,11 @@ def build_model(hp):
         lambda_sum_weight=lambda_sum_weight,
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
-        n_scorers=None,  # Will be set from generator
-        ground_truth_index=GROUND_TRUTH_INDEX,
+        n_scorers=None,
     )
 
 
 if __name__ == "__main__":
-    # Create data generators for each stage
     train_gen = CrowdSegDataGenerator(
         image_size=TARGET_SHAPE,
         batch_size=BATCH_SIZE,
@@ -78,59 +75,30 @@ if __name__ == "__main__":
         schema=DataSchema.MA_RAW,
     )
 
-    # Update model's n_scorers based on the generator
     n_scorers = train_gen.n_scorers
 
-    # tuner = kt.BayesianOptimization(
-    # build_model,
-    # objective=kt.Objective(
-    # "val_segmentation_output_dice_coefficient", direction="max"
-    # ),
-    # max_trials=10,
-    # directory="tuner_results",
-    # project_name="histology_features_tuning",
-    # )
-    #
-    # print("Starting hyperparameter search...")
-    # tuner.search(
-    # train_gen,
-    # epochs=TUNER_EPOCHS,
-    # validation_data=val_gen,
-    # )
-    #
-    # best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
-    # print("\nBest hyperparameters:")
-    # for param, value in best_hps.values.items():
-    # print(f"{param}: {value}")
+    tuner = kt.BayesianOptimization(
+        build_model,
+        objective=kt.Objective(
+            "val_segmentation_output_dice_coefficient", direction="max"
+        ),
+        max_trials=10,
+        directory="tuner_results",
+        project_name="histology_features_tuning",
+    )
+
+    print("Starting hyperparameter search...")
+    tuner.search(
+        train_gen,
+        epochs=TUNER_EPOCHS,
+        validation_data=val_gen,
+    )
+
+    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+    print("\nBest hyperparameters:")
+    for param, value in best_hps.values.items():
+        print(f"{param}: {value}")
     optimizer = Adam(learning_rate=0.001)
-
-    loss_fn = TcgeFeatures(
-        num_classes=NUM_CLASSES,
-        q=0.5,
-        noise_tolerance=0.5,
-        lambda_reg_weight=0.1,
-        lambda_entropy_weight=0.1,
-        lambda_sum_weight=0.1,
-        name="TGCE_FEATURES",
-    )
-
-    dice_fn = DiceCoefficient(
-        num_classes=NUM_CLASSES,
-        name="dice_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,
-    )
-    jaccard_fn = JaccardCoefficient(
-        num_classes=NUM_CLASSES,
-        name="jaccard_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,
-    )
-
-    model = unet_tgce_features(
-        input_shape=TARGET_SHAPE + (3,),
-        n_classes=NUM_CLASSES,
-        n_scorers=n_scorers,  # Will be set from generator
-        name="Unet-TGCE-Features-Model",
-    )
 
     model.compile(
         loss=loss_fn,

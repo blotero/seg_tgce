@@ -19,18 +19,15 @@ class DiceCoefficient(Loss):
         smooth: float = 1.0,
         target_class: Optional[int] = None,
         name: str = "DiceCoefficient",
-        ground_truth_index: int = 0,
         **kwargs
     ):
         self.smooth = smooth
         self.target_class = target_class
         self.num_classes = num_classes
-        self.ground_truth_index = ground_truth_index
         super().__init__(name=name, **kwargs)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         y_true = cast(y_true, TARGET_DATA_TYPE)
-        y_true = y_true[..., self.ground_truth_index]
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
         intersection = tf.reduce_sum(y_true * y_pred, axis=[1, 2])
         union = tf.reduce_sum(y_true, axis=[1, 2]) + tf.reduce_sum(y_pred, axis=[1, 2])
@@ -62,18 +59,15 @@ class JaccardCoefficient(Loss):
         smooth: float = 1e-5,
         target_class: Optional[int] = None,
         name: str = "JaccardCoefficient",
-        ground_truth_index: int = 0,
         **kwargs
     ):
         self.smooth = smooth
         self.target_class = target_class
         self.num_classes = num_classes
-        self.ground_truth_index = ground_truth_index
         super().__init__(name=name, **kwargs)
 
     def call(self, y_true: Tensor, y_pred: Tensor) -> Tensor:
         y_true = cast(y_true, TARGET_DATA_TYPE)
-        y_true = y_true[..., self.ground_truth_index]
         y_pred = cast(y_pred, TARGET_DATA_TYPE)
 
         intersection = tf.reduce_sum(y_true * y_pred, axis=[1, 2])

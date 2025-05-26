@@ -6,7 +6,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.client import Config
 
-from .stage import Stage
+from seg_tgce.data.crowd_seg.types import Stage
 
 LOGGER = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -21,11 +21,11 @@ s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
 
 
 def get_masks_dir(stage: Stage) -> str:
-    return os.path.join(_TARGET_DIR, "masks", stage.value)
+    return os.path.join(_TARGET_DIR, "masks", stage.capitalize())
 
 
 def get_patches_dir(stage: Stage) -> str:
-    return os.path.join(_TARGET_DIR, "patches", stage.value)
+    return os.path.join(_TARGET_DIR, "patches", stage.capitalize())
 
 
 def _unzip_dirs() -> None:
@@ -62,13 +62,9 @@ def verify_path(path: str, with_raise: bool = False) -> bool:
 
 
 def fetch_data() -> None:
-    paths_to_verify = [
-        get_patches_dir(Stage.TRAIN),
-        get_patches_dir(Stage.VAL),
-        get_patches_dir(Stage.TEST),
-        get_masks_dir(Stage.TRAIN),
-        get_masks_dir(Stage.VAL),
-        get_masks_dir(Stage.TEST),
+    stages: tuple[Stage, ...] = ("train", "val", "test")
+    paths_to_verify = [get_patches_dir(stage) for stage in stages] + [
+        get_masks_dir(stage) for stage in stages
     ]
     if all(verify_path(path) for path in paths_to_verify):
         return

@@ -16,8 +16,16 @@ class ScalarVisualizationCallback(Callback):
         self.reliability_type = reliability_type
 
     def on_epoch_end(self, epoch, logs=None):
-        x_val, y_val, labeler_mask = next(iter(self.validation_data))
-
+        data_iter = next(iter(self.validation_data))
+        if isinstance(data_iter, dict):
+            x_val, y_val, labeler_mask, y_ground_truth = (
+                data_iter["x"],
+                data_iter["y_labelers"],
+                data_iter["labelers_mask"],
+                data_iter["ground_truth"],
+            )
+        else:
+            x_val, y_val, labeler_mask, y_ground_truth = data_iter
         y_pred, lambda_r = self.model(x_val, training=False)
 
         self._visualize_results(
@@ -76,8 +84,16 @@ class FeatureVisualizationCallback(Callback):
         self.reliability_type = reliability_type
 
     def on_epoch_end(self, epoch, logs=None):
-        x_val, y_val, labeler_mask = next(iter(self.validation_data))
-
+        data_iter = next(iter(self.validation_data))
+        if isinstance(data_iter, dict):
+            x_val, y_val, labeler_mask, y_ground_truth = (
+                data_iter["x"],
+                data_iter["y_labelers"],
+                data_iter["labelers_mask"],
+                data_iter["ground_truth"],
+            )
+        else:
+            x_val, y_val, labeler_mask, y_ground_truth = data_iter
         y_pred, lambda_r = self.model(x_val, training=False)
 
         self._visualize_results(
@@ -130,8 +146,16 @@ class PixelVisualizationCallback(Callback):
         self.reliability_type = reliability_type
 
     def on_epoch_end(self, epoch, logs=None):
-        x_val, y_val, labeler_mask = next(iter(self.validation_data))
-
+        data_iter = next(iter(self.validation_data))
+        if isinstance(data_iter, dict):
+            x_val, y_val, labeler_mask, y_ground_truth = (
+                data_iter["x"],
+                data_iter["y_labelers"],
+                data_iter["labelers_mask"],
+                data_iter["ground_truth"],
+            )
+        else:
+            x_val, y_val, labeler_mask, y_ground_truth = data_iter
         y_pred, lambda_r = self.model(x_val, training=False)
 
         self._visualize_results(
@@ -156,7 +180,9 @@ class PixelVisualizationCallback(Callback):
         axes[1, 0].axis("off")
 
         # Calculate mean reliability only for active annotators
-        mean_reliability = np.mean(lambda_r[..., active_annotators], axis=-1)
+        # Convert tensor to numpy array first
+        lambda_r_np = lambda_r.numpy()
+        mean_reliability = np.mean(lambda_r_np[..., active_annotators], axis=-1)
         im = axes[2, 0].imshow(mean_reliability, cmap="gray", vmin=0, vmax=1)
         axes[2, 0].set_title("Mean Reliability Map")
         axes[2, 0].axis("off")
@@ -170,16 +196,16 @@ class PixelVisualizationCallback(Callback):
             axes[0, i + 1].set_title(f"Annotator {annotator_idx+1} Mask")
             axes[0, i + 1].axis("off")
 
-            weighted_seg = pred_seg * lambda_r[..., annotator_idx]
+            weighted_seg = pred_seg * lambda_r_np[..., annotator_idx]
             axes[1, i + 1].imshow(weighted_seg)
             axes[1, i + 1].set_title(
-                f"Weighted Segmentation (λ={np.mean(lambda_r[..., annotator_idx]):.3f})"
+                f"Weighted Segmentation (λ={np.mean(lambda_r_np[..., annotator_idx]):.3f})"
             )
             axes[1, i + 1].axis("off")
 
             # Use grayscale colormap for reliability map
             im = axes[2, i + 1].imshow(
-                lambda_r[..., annotator_idx], cmap="gray", vmin=0, vmax=1
+                lambda_r_np[..., annotator_idx], cmap="gray", vmin=0, vmax=1
             )
             axes[2, i + 1].set_title(f"Reliability Map {annotator_idx+1}")
             axes[2, i + 1].axis("off")
@@ -195,7 +221,13 @@ class ModelMultipleAnnotators(Model):
         self.reliability_type = kwargs.get("reliability_type", "pixel")
 
     def train_step(self, data):
-        x, y, labeler_mask = data
+        if isinstance(data, dict):
+            x = data["x"]
+            y = data["y_labelers"]
+            labeler_mask = data["labelers_mask"]
+            y_ground_truth = data["ground_truth"]
+        else:
+            x, y, labeler_mask, y_ground_truth = data
 
         with GradientTape() as tape:
             y_pred, lambda_r = self(x, training=True)
@@ -210,11 +242,18 @@ class ModelMultipleAnnotators(Model):
             if metric.name == "loss":
                 metric.update_state(loss)
             else:
-                metric.update_state(y, y_pred)
+                metric.update_state(y_ground_truth, y_pred)
         return {m.name: m.result() for m in self.metrics}
 
     def test_step(self, data):
-        x, y, labeler_mask = data
+        if isinstance(data, dict):
+            x = data["x"]
+            y = data["y_labelers"]
+            labeler_mask = data["labelers_mask"]
+            y_ground_truth = data["ground_truth"]
+        else:
+            x, y, labeler_mask, y_ground_truth = data
+
         y_pred, lambda_r = self(x, training=False)
         loss = self.loss_fn.call(
             y_true=y, y_pred=y_pred, lambda_r=lambda_r, labeler_mask=labeler_mask
@@ -226,7 +265,7 @@ class ModelMultipleAnnotators(Model):
                 metric.update_state(loss)
                 return_metrics[metric.name] = metric.result()
             else:
-                metric.update_state(y, y_pred)
+                metric.update_state(y_ground_truth, y_pred)
                 result = metric.result()
                 if isinstance(result, dict):
                     return_metrics.update(result)

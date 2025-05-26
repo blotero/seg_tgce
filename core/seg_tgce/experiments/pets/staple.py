@@ -1,25 +1,31 @@
 import numpy as np
 import SimpleITK as sitk
 import tensorflow as tf
+from seg_tgce.data.oxford_pet.oxford_iiit_pet import OxfordIiitPet
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
     get_data_multiple_annotators,
 )
+from seg_tgce.data.utils import (
+    LabelerAssignmentManager,
+    map_dataset_multiple_annotators,
+)
 from seg_tgce.metrics import DiceCoefficient, JaccardCoefficient
 
 TARGET_SHAPE = (256, 256)
-GROUND_TRUTH_INDEX = -1  # Last labeler is ground truth
 BATCH_SIZE = 64
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 0.0, 10.0]
 NUM_SCORERS = len(NOISE_LEVELS)
-LABELING_RATES = [0.3]
+LABELING_RATES = [1.0, 0.7, 0.3]
+SEED = 42
+
+MODEL_ORIGINAL_SHAPE = (512, 512)
 
 
 def perform_staple(masks, labeler_masks):
     """
-    Perform STAPLE algorithm on predictions from multiple annotators,
-    excluding the ground truth labeler from STAPLE input.
+    Perform STAPLE algorithm on predictions from multiple annotators.
     Args:
         masks: tensorflow tensor of shape (batch_size, height, width, num_classes, num_scorers)
         labeler_masks: tensorflow tensor indicating which labelers labeled which images
@@ -33,19 +39,10 @@ def perform_staple(masks, labeler_masks):
     batch_size, height, width, num_classes, num_scorers = masks_np.shape
     staple_predictions = np.zeros((batch_size, height, width, num_classes))
 
-    # Determine the actual index of the ground truth scorer
-    # (num_scorers - 1) because GROUND_TRUTH_INDEX is -1
-    gt_scorer_actual_idx = num_scorers - 1
-
     # For each image in the batch
     for b in range(batch_size):
         # Get which labelers labeled this image
-        active_labelers_all = np.where(labeler_masks_np[b] == 1)[0]
-
-        # Exclude the ground truth scorer from the list of labelers for STAPLE input
-        labelers_for_staple_input = [
-            l_idx for l_idx in active_labelers_all if l_idx != gt_scorer_actual_idx
-        ]
+        active_labelers = np.where(labeler_masks_np[b] == 1)[0]
 
         # For each class
         for c in range(num_classes):
@@ -54,15 +51,15 @@ def perform_staple(masks, labeler_masks):
                 (height, width), dtype=np.uint8
             )
 
-            # Get binary segmentation for each active labeler (excluding GT)
-            for l in labelers_for_staple_input:
+            # Get binary segmentation for each active labeler
+            for l in active_labelers:
                 class_scores_for_labeler = masks_np[b, :, :, c, l]
                 binary_segmentation = (class_scores_for_labeler > 0.5).astype(np.uint8)
                 sum_of_all_binary_masks_for_class += binary_segmentation
                 sitk_mask = sitk.GetImageFromArray(binary_segmentation)
                 segmentations_sitk.append(sitk_mask)
 
-            if not segmentations_sitk:  # No non-GT active labelers for this image
+            if not segmentations_sitk:  # No active labelers for this image
                 staple_predictions[b, :, :, c] = np.zeros(
                     (height, width), dtype=np.float32
                 )
@@ -81,7 +78,7 @@ def perform_staple(masks, labeler_masks):
                 if (
                     len(segmentations_sitk) < 2
                     and np.sum(sum_of_all_binary_masks_for_class) > 0
-                ):  # If only one non-GT labeler, their segmentation is the result
+                ):  # If only one labeler, their segmentation is the result
                     staple_predictions[b, :, :, c] = sitk.GetArrayFromImage(
                         segmentations_sitk[0]
                     )
@@ -117,12 +114,10 @@ def evaluate_staple(test_data):
     dice_fn = DiceCoefficient(
         num_classes=NUM_CLASSES,
         name="dice_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,  # This will use the last scorer from 'masks' as GT
     )
     jaccard_fn = JaccardCoefficient(
         num_classes=NUM_CLASSES,
         name="jaccard_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,  # This will use the last scorer from 'masks' as GT
     )
 
     # Process test data
@@ -133,16 +128,16 @@ def evaluate_staple(test_data):
 
     for num, batch in enumerate(test_data):
         print(f"Processing batch {num} of {len(test_data)}")
-        images, masks_tensor, labeler_masks_tensor = batch
+        images, masks_tensor, labeled_by, ground_truth = batch
 
         # Perform STAPLE
-        staple_predictions_np = perform_staple(masks_tensor, labeler_masks_tensor)
+        staple_predictions_np = perform_staple(masks_tensor, labeled_by)
         staple_predictions_tf = tf.convert_to_tensor(
             staple_predictions_np, dtype=tf.float32
         )
 
-        dice_score = dice_fn(masks_tensor, staple_predictions_tf)
-        jaccard_score = jaccard_fn(masks_tensor, staple_predictions_tf)
+        dice_score = dice_fn(ground_truth, staple_predictions_tf)
+        jaccard_score = jaccard_fn(ground_truth, staple_predictions_tf)
 
         if not (tf.math.is_nan(dice_score) or tf.math.is_nan(jaccard_score)):
             total_dice += dice_score.numpy()
@@ -162,20 +157,30 @@ def evaluate_staple(test_data):
 
 def main():
     # Fetch the disturbance models
-    disturbance_models = fetch_models(NOISE_LEVELS)
+    disturbance_models = fetch_models(NOISE_LEVELS, seed=SEED)
 
     print("\nSTAPLE Results:")
     print("-" * 50)
     print(f"{'Labeling Rate':<15} {'Dice Coefficient':<20} {'Jaccard Coefficient':<20}")
     print("-" * 50)
 
+    dataset = OxfordIiitPet()
+    _, _, test_dataset = dataset()
+
     for labeling_rate in LABELING_RATES:
-        # Get the data for current labeling rate
-        _, _, test = get_data_multiple_annotators(
-            annotation_models=disturbance_models,
-            target_shape=TARGET_SHAPE,
-            batch_size=BATCH_SIZE,
+        labeler_manager = LabelerAssignmentManager(
+            num_samples=len(test_dataset),
+            num_labelers=len(disturbance_models),
             labeling_rate=labeling_rate,
+            seed=42,
+        )
+        test = map_dataset_multiple_annotators(
+            dataset=test_dataset,
+            target_shape=TARGET_SHAPE,
+            model_shape=MODEL_ORIGINAL_SHAPE,
+            batch_size=BATCH_SIZE,
+            disturbance_models=disturbance_models,
+            labeler_manager=labeler_manager,
         )
 
         # Evaluate STAPLE

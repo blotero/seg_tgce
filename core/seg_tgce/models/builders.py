@@ -16,7 +16,6 @@ def build_scalar_model_from_hparams(
     num_classes: int,
     target_shape: tuple,
     n_scorers: int,
-    ground_truth_index: int = -1,
 ) -> Model:
     """Build the scalar model with direct hyperparameter values.
 
@@ -30,7 +29,6 @@ def build_scalar_model_from_hparams(
         num_classes: Number of classes in the segmentation
         target_shape: Target shape of input images
         n_scorers: Number of annotators/scorers
-        ground_truth_index: Index of ground truth in the annotations
 
     Returns:
         Compiled Keras model
@@ -50,12 +48,10 @@ def build_scalar_model_from_hparams(
     dice_fn = DiceCoefficient(
         num_classes=num_classes,
         name="dice_coefficient",
-        ground_truth_index=ground_truth_index,
     )
     jaccard_fn = JaccardCoefficient(
         num_classes=num_classes,
         name="jaccard_coefficient",
-        ground_truth_index=ground_truth_index,
     )
 
     model = unet_tgce_scalar(
@@ -84,7 +80,6 @@ def build_features_model_from_hparams(
     num_classes: int,
     target_shape: tuple,
     n_scorers: int,
-    ground_truth_index: int = -1,
 ) -> Model:
     """Build the features model with direct hyperparameter values.
 
@@ -98,7 +93,6 @@ def build_features_model_from_hparams(
         num_classes: Number of classes in the segmentation
         target_shape: Target shape of input images
         n_scorers: Number of annotators/scorers
-        ground_truth_index: Index of ground truth in the annotations
 
     Returns:
         Compiled Keras model
@@ -118,12 +112,10 @@ def build_features_model_from_hparams(
     dice_fn = DiceCoefficient(
         num_classes=num_classes,
         name="dice_coefficient",
-        ground_truth_index=ground_truth_index,
     )
     jaccard_fn = JaccardCoefficient(
         num_classes=num_classes,
         name="jaccard_coefficient",
-        ground_truth_index=ground_truth_index,
     )
 
     model = unet_tgce_features(
@@ -152,7 +144,6 @@ def build_pixel_model_from_hparams(
     num_classes: int,
     target_shape: tuple,
     n_scorers: int,
-    ground_truth_index: int = -1,
 ) -> Model:
     """Build the pixel model with direct hyperparameter values.
 
@@ -166,7 +157,6 @@ def build_pixel_model_from_hparams(
         num_classes: Number of classes in the segmentation
         target_shape: Target shape of input images
         n_scorers: Number of annotators/scorers
-        ground_truth_index: Index of ground truth in the annotations
 
     Returns:
         Compiled Keras model
@@ -186,12 +176,10 @@ def build_pixel_model_from_hparams(
     dice_fn = DiceCoefficient(
         num_classes=num_classes,
         name="dice_coefficient",
-        ground_truth_index=ground_truth_index,
     )
     jaccard_fn = JaccardCoefficient(
         num_classes=num_classes,
         name="jaccard_coefficient",
-        ground_truth_index=ground_truth_index,
     )
 
     model = unet_tgce_pixel(

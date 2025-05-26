@@ -1,15 +1,11 @@
 import keras_tuner as kt
-from keras.optimizers import Adam
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
     get_data_multiple_annotators,
 )
 from seg_tgce.experiments.plot_utils import plot_training_history, print_test_metrics
-from seg_tgce.loss.tgce import TcgePixel
-from seg_tgce.metrics import DiceCoefficient, JaccardCoefficient
 from seg_tgce.models.builders import build_pixel_model_from_hparams
 from seg_tgce.models.ma_model import PixelVisualizationCallback
-from seg_tgce.models.unet import unet_tgce_pixel
 
 TARGET_SHAPE = (128, 128)
 BATCH_SIZE = 16
@@ -17,8 +13,8 @@ NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 10.0]
 NUM_SCORERS = len(NOISE_LEVELS)
 TRAIN_EPOCHS = 50
-TUNER_EPOCHS = 10
-GROUND_TRUTH_INDEX = 1
+TUNER_EPOCHS = 1
+TUNER_TRIALS = 1
 
 
 def build_model(hp):
@@ -49,7 +45,6 @@ def build_model(hp):
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=NUM_SCORERS,
-        ground_truth_index=GROUND_TRUTH_INDEX,
     )
 
 
@@ -67,7 +62,7 @@ if __name__ == "__main__":
         objective=kt.Objective(
             "val_segmentation_output_dice_coefficient", direction="max"
         ),
-        max_trials=10,
+        max_trials=TUNER_TRIALS,
         directory="tuner_results",
         project_name="pixel_tuning",
     )

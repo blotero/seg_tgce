@@ -1,17 +1,24 @@
 import numpy as np
+from seg_tgce.data.oxford_pet.oxford_iiit_pet import OxfordIiitPet
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
     get_data_multiple_annotators,
 )
+from seg_tgce.data.utils import (
+    LabelerAssignmentManager,
+    map_dataset_multiple_annotators,
+)
 from seg_tgce.metrics import DiceCoefficient, JaccardCoefficient
 
 TARGET_SHAPE = (256, 256)
-GROUND_TRUTH_INDEX = -1  # Last labeler is ground truth
 BATCH_SIZE = 64
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 0.0, 10.0]
 NUM_SCORERS = len(NOISE_LEVELS)
 LABELING_RATES = [1.0, 0.7, 0.3]
+SEED = 42
+
+MODEL_ORIGINAL_SHAPE = (512, 512)
 
 
 def boyer_moore_majority_vote(votes):
@@ -86,12 +93,10 @@ def evaluate_majority_voting(test_data):
     dice_fn = DiceCoefficient(
         num_classes=NUM_CLASSES,
         name="dice_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,
     )
     jaccard_fn = JaccardCoefficient(
         num_classes=NUM_CLASSES,
         name="jaccard_coefficient",
-        ground_truth_index=GROUND_TRUTH_INDEX,
     )
 
     # Process test data
@@ -102,14 +107,14 @@ def evaluate_majority_voting(test_data):
 
     for num, batch in enumerate(test_data):
         print(f"Processing batch {num} of {len(test_data)}")
-        images, masks, labeler_masks = batch
+        images, masks, labeled_by, ground_truth = batch
 
         # Perform majority voting
-        mv_predictions = perform_majority_voting(masks, labeler_masks)
+        mv_predictions = perform_majority_voting(masks, labeled_by)
 
         # Calculate metrics
-        dice_score = dice_fn(masks, mv_predictions)
-        jaccard_score = jaccard_fn(masks, mv_predictions)
+        dice_score = dice_fn(ground_truth, mv_predictions)
+        jaccard_score = jaccard_fn(ground_truth, mv_predictions)
 
         total_dice += dice_score
         total_jaccard += jaccard_score
@@ -124,20 +129,31 @@ def evaluate_majority_voting(test_data):
 
 def main():
     # Fetch the disturbance models
-    disturbance_models = fetch_models(NOISE_LEVELS)
+    disturbance_models = fetch_models(NOISE_LEVELS, seed=SEED)
 
     print("\nMajority Voting Results:")
     print("-" * 50)
     print(f"{'Labeling Rate':<15} {'Dice Coefficient':<20} {'Jaccard Coefficient':<20}")
     print("-" * 50)
 
+    dataset = OxfordIiitPet()
+    _, _, test_dataset = dataset()
     for labeling_rate in LABELING_RATES:
-        # Get the data for current labeling rate
-        _, _, test = get_data_multiple_annotators(
-            annotation_models=disturbance_models,
-            target_shape=TARGET_SHAPE,
-            batch_size=BATCH_SIZE,
+
+        labeler_manager = LabelerAssignmentManager(
+            num_samples=len(test_dataset),
+            num_labelers=len(disturbance_models),
             labeling_rate=labeling_rate,
+            seed=42,
+        )
+
+        test = map_dataset_multiple_annotators(
+            dataset=test_dataset,
+            target_shape=TARGET_SHAPE,
+            model_shape=MODEL_ORIGINAL_SHAPE,
+            batch_size=BATCH_SIZE,
+            disturbance_models=disturbance_models,
+            labeler_manager=labeler_manager,
         )
 
         # Evaluate majority voting
