@@ -17,7 +17,6 @@ BATCH_SIZE = 8
 NUM_CLASSES = 6  # From CLASSES_DEFINITION in generator.py
 TRAIN_EPOCHS = 50
 TUNER_EPOCHS = 10
-GROUND_TRUTH_INDEX = 1  # "Other" class
 
 
 def build_model(hp):
@@ -48,7 +47,6 @@ def build_model(hp):
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=None,  # Will be set from generator
-        ground_truth_index=GROUND_TRUTH_INDEX,
     )
 
 

@@ -52,7 +52,11 @@ def add_noise_to_layer_weights(
     noise_snr: float,
     snr_type: SnrType = SnrType.LOG,
     verbose: int = 0,
+    seed: int | None = None,
 ) -> float:
+    if seed is not None:
+        np.random.seed(seed)
+
     layer_weights = model.layers[layer_num].get_weights()
 
     sig_power = np.mean(layer_weights[0] ** 2)
@@ -80,7 +84,10 @@ def add_noise_to_layer_weights(
 
 
 def produce_disturbed_models(
-    snr_value_list: list[float], base_model_path: str, layer_to_disturb: int
+    snr_value_list: list[float],
+    base_model_path: str,
+    layer_to_disturb: int,
+    seed: int | None = None,
 ) -> tuple[list[Model], list[float]]:
     snr_measured_values: list[float] = []
     models: list[Model] = []
@@ -92,7 +99,7 @@ def produce_disturbed_models(
             safe_mode=False,
             custom_objects={"ResizeToInput": ResizeToInput},
         )
-        snr = add_noise_to_layer_weights(model_, layer_to_disturb, value)
+        snr = add_noise_to_layer_weights(model_, layer_to_disturb, value, seed=seed)
         snr_measured_values.append(snr)
         models.append(model_)
     return models, snr_measured_values

@@ -1,4 +1,5 @@
 import keras_tuner as kt
+from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
@@ -8,14 +9,14 @@ from seg_tgce.experiments.plot_utils import plot_training_history, print_test_me
 from seg_tgce.models.builders import build_scalar_model_from_hparams
 from seg_tgce.models.ma_model import ScalarVisualizationCallback
 
-TARGET_SHAPE = (128, 128)
-GROUND_TRUTH_INDEX = 1
-BATCH_SIZE = 16
+TARGET_SHAPE = (64, 64)
+BATCH_SIZE = 64
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 0.0, 10.0]
 NUM_SCORERS = len(NOISE_LEVELS)
 TRAIN_EPOCHS = 50
 TUNER_EPOCHS = 10
+SEED = 42
 
 
 def build_model(hp):
@@ -46,12 +47,11 @@ def build_model(hp):
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=NUM_SCORERS,
-        ground_truth_index=GROUND_TRUTH_INDEX,
     )
 
 
 if __name__ == "__main__":
-    disturbance_models = fetch_models(NOISE_LEVELS)
+    disturbance_models = fetch_models(NOISE_LEVELS, seed=SEED)
     train, val, test = get_data_multiple_annotators(
         annotation_models=disturbance_models,
         target_shape=TARGET_SHAPE,
@@ -89,7 +89,15 @@ if __name__ == "__main__":
         train.take(16).cache(),
         epochs=TRAIN_EPOCHS,
         validation_data=val.take(8).cache(),
-        callbacks=[vis_callback],
+        callbacks=[
+            vis_callback,
+            EarlyStopping(
+                monitor="val_segmentation_output_dice_coefficient",
+                patience=5,
+                mode="max",
+                restore_best_weights=True,
+            ),
+        ],
     )
 
     plot_training_history(history, "Scalar Model Training History")

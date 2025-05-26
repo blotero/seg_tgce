@@ -45,7 +45,7 @@ def print_test_metrics(model, test_data, model_name):
         model_name: Name of the model for printing
     """
     print(f"\nEvaluating {model_name} model:")
-    results = model.evaluate(test_data.cache())
+    results = model.evaluate(test_data)
 
     # Get metric names from model
     metric_names = [m.name for m in model.metrics]

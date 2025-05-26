@@ -51,22 +51,14 @@ class LabelerAssignmentManager:
         self.num_labelers = num_labelers
         self.labeling_rate = labeling_rate
 
-        # Set random seed for reproducibility
         np.random.seed(seed)
 
-        # Initialize assignments matrix (samples x labelers)
-        # Each labeler independently decides which samples to label
-        # Shape: (num_samples, num_labelers)
-        # True means the labeler is assigned to that sample
         self.assignments = np.zeros((num_samples, num_labelers), dtype=bool)
 
-        # For each labeler, randomly decide which samples they will label
         for labeler_idx in range(num_labelers):
-            # Generate random mask for this labeler
             labeler_mask = np.random.random(num_samples) < labeling_rate
             self.assignments[:, labeler_idx] = labeler_mask
 
-        # Convert to tensorflow tensor for better compatibility
         self.assignments_tf = tf.convert_to_tensor(self.assignments, dtype=tf.float32)
 
     def get_labeler_mask(self, sample_idx: int | tf.Tensor) -> tf.Tensor:
@@ -80,10 +72,8 @@ class LabelerAssignmentManager:
             Tensor of shape (num_labelers,) with 1s for assigned labelers and 0s for unassigned
         """
         if isinstance(sample_idx, tf.Tensor):
-            # Use tf.gather for tensor indices
             return tf.gather(self.assignments_tf, sample_idx)
         else:
-            # Use numpy indexing for integer indices
             return tf.convert_to_tensor(self.assignments[sample_idx], dtype=tf.float32)
 
     def get_assignment_matrix(self) -> tf.Tensor:
@@ -122,7 +112,7 @@ def map_dataset_multiple_annotators(
     labeler_manager: LabelerAssignmentManager | None = None,
 ) -> Tensor:
     """
-    Map dataset to include multiple annotator masks with optional labeler assignments.
+    Map dataset to include multiple annotator masks and ground truth as separate elements.
 
     Args:
         dataset: Input dataset
@@ -146,10 +136,8 @@ def map_dataset_multiple_annotators(
     )
 
     if labeler_manager is not None:
-        # Add sample index to the dataset
         dataset_ = dataset_.enumerate()
 
-        # Map to include labeler assignments
         dataset_ = dataset_.map(
             lambda idx, data: (
                 data[0],
@@ -159,23 +147,25 @@ def map_dataset_multiple_annotators(
                     model_shape=model_shape,
                     target_shape=target_shape,
                 ),
+                data[1],  # Keep the ground truth mask
                 labeler_manager.get_labeler_mask(idx),
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
 
-        # Apply labeler mask to annotations
+        # Apply labeler mask to noisy annotations
         dataset_ = dataset_.map(
-            lambda img, masks, labeler_mask: (
+            lambda img, masks, gt_mask, labeler_mask: (
                 img,
                 tf.multiply(masks, tf.reshape(labeler_mask, [1, 1, 1, -1])),
                 labeler_mask,
+                gt_mask,
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
     else:
         dataset_ = dataset_.map(
-            lambda img, mask, labeler_mask: (
+            lambda img, mask: (
                 img,
                 add_noisy_annotators(
                     tf.expand_dims(img, 0),
@@ -183,16 +173,28 @@ def map_dataset_multiple_annotators(
                     model_shape=model_shape,
                     target_shape=target_shape,
                 ),
-                labeler_mask,
+                mask,  # Keep the ground truth mask
+            ),
+            num_parallel_calls=tf.data.AUTOTUNE,
+        )
+
+        # Add all ones labeler mask for noisy annotations
+        dataset_ = dataset_.map(
+            lambda img, masks, gt_mask: (
+                img,
+                masks,
+                tf.ones(tf.shape(masks)[-1]),  # All labelers assigned
+                gt_mask,
             ),
             num_parallel_calls=tf.data.AUTOTUNE,
         )
 
     dataset_ = dataset_.map(
-        lambda img, mask, labeler_mask: (
+        lambda img, mask, labeler_mask, gt_mask: (
             img,
             tf.squeeze(mask, axis=2),
             labeler_mask,
+            gt_mask,
         ),
         num_parallel_calls=tf.data.AUTOTUNE,
     )
