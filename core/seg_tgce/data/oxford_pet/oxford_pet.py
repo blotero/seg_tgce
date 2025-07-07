@@ -1,5 +1,4 @@
-from cProfile import label
-
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -58,8 +57,6 @@ def get_data_multiple_annotators(
     train_dataset, val_dataset, test_dataset = dataset()
 
     train_size = sum(1 for _ in train_dataset)
-    val_size = sum(1 for _ in val_dataset)
-    test_size = sum(1 for _ in test_dataset)
 
     train_labeler_manager = LabelerAssignmentManager(
         num_samples=train_size,
@@ -78,8 +75,11 @@ def get_data_multiple_annotators(
             labeler_manager=labeler_manager,
         )
         for data, labeler_manager in (
-            (train_dataset, train_labeler_manager),
-            (val_dataset, None),
+            (
+                train_dataset.cache().shuffle(1000).repeat(2).prefetch(tf.data.AUTOTUNE),
+                train_labeler_manager,
+            ),
+            (val_dataset.prefetch(tf.data.AUTOTUNE), None),
             (test_dataset, None),
         )
     )
@@ -130,8 +130,8 @@ def visualize_data(
         2: "#2a788e",  # Border
     }
 
-    colors = [plt.cm.colors.to_rgb(color) for color in class_colors.values()]
-    cmap = plt.cm.colors.ListedColormap(colors)
+    colors = [mcolors.to_rgb(color) for color in class_colors.values()]
+    cmap = mcolors.ListedColormap(colors)
 
     for i in range(num_samples):
         if i >= len(images):

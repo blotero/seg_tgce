@@ -1,19 +1,20 @@
 {
   "editor.formatOnSave": true,
-  "editor.rulers": [88],
+  "editor.rulers": [90],
   "python.analysis.autoImportCompletions": true,
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+      "source.organizeImports": "explicit",
+      "source.fixAll": "explicit"
     }
   },
-  "isort.args": ["--profile", "black"],
-  "isort.path": ["~/.env/python", "-m", "isort"],
-  "workbench.colorTheme": "Gruvbox Dark Hard"
+  "workbench.colorTheme": "Gruvbox Dark Hard",
+  "mypy-type-checker.cwd": "${nearestConfig}",
+  "python.defaultInterpreterPath": "${workspaceFolder}/core/.venv/bin/python"
 }

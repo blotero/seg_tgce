@@ -1,4 +1,6 @@
 import keras_tuner as kt
+import tensorflow as tf
+
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
     get_data_multiple_annotators,
@@ -7,7 +9,7 @@ from seg_tgce.experiments.plot_utils import plot_training_history, print_test_me
 from seg_tgce.models.builders import build_features_model_from_hparams
 from seg_tgce.models.ma_model import FeatureVisualizationCallback
 
-TARGET_SHAPE = (128, 128)
+TARGET_SHAPE = (256, 256)
 BATCH_SIZE = 8
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 10.0]
@@ -17,14 +19,12 @@ TUNER_EPOCHS = 1
 TUNER_TRIALS = 1
 
 
-def build_model(hp):
+def build_model(hp: kt.HyperParameters) -> tf.keras.Model:
     learning_rate = hp.Float(
         "learning_rate", min_value=1e-5, max_value=1e-2, sampling="LOG"
     )
     q = hp.Float("q", min_value=0.1, max_value=0.9, step=0.1)
-    noise_tolerance = hp.Float(
-        "noise_tolerance", min_value=0.1, max_value=0.9, step=0.1
-    )
+    noise_tolerance = hp.Float("noise_tolerance", min_value=0.1, max_value=0.9, step=0.1)
     lambda_reg_weight = hp.Float(
         "lambda_reg_weight", min_value=0.01, max_value=0.5, step=0.01
     )

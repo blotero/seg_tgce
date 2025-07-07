@@ -11,3 +11,4 @@ core/dist
 __data__
 **/results/**
 tuner_results/
+**/vis/

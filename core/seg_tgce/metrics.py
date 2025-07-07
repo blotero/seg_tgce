@@ -19,7 +19,7 @@ class DiceCoefficient(Loss):
         smooth: float = 1.0,
         target_class: Optional[int] = None,
         name: str = "DiceCoefficient",
-        **kwargs
+        **kwargs,
     ):
         self.smooth = smooth
         self.target_class = target_class
@@ -59,7 +59,7 @@ class JaccardCoefficient(Loss):
         smooth: float = 1e-5,
         target_class: Optional[int] = None,
         name: str = "JaccardCoefficient",
-        **kwargs
+        **kwargs,
     ):
         self.smooth = smooth
         self.target_class = target_class
