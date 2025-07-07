@@ -48,7 +48,7 @@ class OxfordIiitPet:
         splits_ = []
         for percentage in splits:
             percentage_sum += percentage
-            splits_.append(f"train[{percentage_sum-percentage}%:{percentage_sum}%]")
+            splits_.append(f"train[{percentage_sum - percentage}%:{percentage_sum}%]")
         return splits_
 
     def to_one_hot(self, mask: Tensor) -> Tensor:

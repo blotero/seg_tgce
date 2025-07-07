@@ -19,7 +19,7 @@ then, set up your environment as follows:
 
    cd core/
    poetry install
-   poetry shell
+   poetry env activate
 
 This will let you with an environment with all dependencies and a shell
 session ready to go.
@@ -30,22 +30,15 @@ When contributing, run your tets locally with:
 
    pytest .
 
-Also, use ``pylint`` and ``mypy`` for linting code. CI pipelines will
+Also, use ``ruff`` and ``mypy`` for formatting and linting code. CI pipelines will
 run these too and will fail if code quality is not 10/10:
 
 .. code:: bash
 
-   pylint seg_tgce
-   mypy seg_tgce
+   ruff check .
+   ruff format .
+   mypy .
 
-Pylint should score your code 10/10 and mypy should find no issues.
-
-Additionally, for formatting code, you can use ``isort`` and ``black``:
-
-.. code:: bash
-
-   black seg_tgce
-   isort --profile=black seg_tgce
 
 Finally, the package can be built and published to pypi with:
 
@@ -71,7 +64,7 @@ Please setup your development environment with ``poetry`` for python
 
    cd docs/
    poetry install
-   poetry shell
+   poetry env activate
 
 Once your environment is ready, you can lint your pages after adding new
 content as follows:

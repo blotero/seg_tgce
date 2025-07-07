@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+    
         {
             "name": "Poetry: Oxford pet",
             "type": "debugpy",
@@ -49,12 +50,25 @@
             }
         },
         {
+            "name": "Poetry: Histology baseline experiment",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.experiments.histology.baseline",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            // "args": ["--use-tuner"],
+        },
+        {
             "name": "Poetry: Histology scalar experiment",
             "type": "debugpy",
             "request": "launch",
             "module": "seg_tgce.experiments.histology.scalar",
             "console": "integratedTerminal",
             "justMyCode": true,
+            "args": ["--use-tuner"],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
@@ -93,6 +107,17 @@
             }
         },
         {
+            "name": "Poetry: Crowd seg tfds",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.data.crowd_seg.tfds_builder",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Poetry: Unet",
             "type": "debugpy",
             "request": "launch",
@@ -124,6 +149,28 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
-        }
+        },
+        {
+            "name": "Tgce scalar debug",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.loss.tgce_debug",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Poetry: Oxford pet tfds",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "seg_tgce.data.oxford_pet.oxford_pet_tfds",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
     ]
 }

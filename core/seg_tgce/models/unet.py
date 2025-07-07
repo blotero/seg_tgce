@@ -8,21 +8,17 @@ from keras.layers import (
     BatchNormalization,
     Concatenate,
     Conv2D,
-    Conv2DTranspose,
     Dense,
     Dropout,
     GlobalAveragePooling2D,
     Input,
     Layer,
     MaxPool2D,
-    Reshape,
     UpSampling2D,
 )
 from keras.models import Model
 from keras.saving import register_keras_serializable
 from keras.utils import get_custom_objects
-from tensorflow import Tensor
-from tensorflow.keras import backend as K
 from tensorflow.keras.utils import model_to_dot
 
 from seg_tgce.layers import SparseSoftmax
@@ -76,7 +72,7 @@ def kernel_initializer(seed: float) -> GlorotUniform:
     return GlorotUniform(seed=seed)
 
 
-def build_backbone_encoder(input_shape):
+def build_backbone_encoder(input_shape: tuple[int, int, int]) -> Model:
     backbone = keras_hub.models.ResNetBackbone.from_preset(
         "resnet_vd_34_imagenet", load_weights=True
     )
@@ -94,102 +90,65 @@ def build_backbone_encoder(input_shape):
 
 
 def build_decoder(
-    x: Layer, level_1: Layer, level_2: Layer, level_3: Layer, level_4: Layer
+    x: Layer,
+    level_1: Layer,
+    level_2: Layer,
+    level_3: Layer,
+    level_4: Layer,
+    dropout_rate: float = 0.2,
 ) -> Layer:
-    # Initial bottleneck processing
-    x = DefaultConv2D(256, kernel_initializer=kernel_initializer(89), name="Conv50")(x)
+    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(89), name="Conv50")(x)
     x = BatchNormalization(name="Batch50")(x)
-    x = Dropout(0.2, name="Dropout50")(x)
-    x = DefaultConv2D(256, kernel_initializer=kernel_initializer(42), name="Conv51")(x)
+    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(42), name="Conv51")(x)
     x = BatchNormalization(name="Batch51")(x)
-    x = Dropout(0.2, name="Dropout51")(x)
-
-    # Upsampling blocks with transposed convolutions
-    x = Conv2DTranspose(
-        128,
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        kernel_initializer=kernel_initializer(91),
-        name="Up60",
-    )(x)
+    x = UpSample(name="Up60")(x)  # 8x8 -> 16x16
     x = Concatenate(name="Concat60")([level_4, x])
-    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(91), name="Conv60")(x)
+    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(91), name="Conv60")(x)
     x = BatchNormalization(name="Batch60")(x)
-    x = Dropout(0.2, name="Dropout60")(x)
-    x = DefaultConv2D(128, kernel_initializer=kernel_initializer(47), name="Conv61")(x)
+    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(47), name="Conv61")(x)
     x = BatchNormalization(name="Batch61")(x)
-    x = Dropout(0.2, name="Dropout61")(x)
-
-    x = Conv2DTranspose(
-        64,
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        kernel_initializer=kernel_initializer(21),
-        name="Up70",
-    )(x)
+    x = UpSample(name="Up70")(x)  # 16x16 -> 32x32
     x = Concatenate(name="Concat70")([level_3, x])
-    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(21), name="Conv70")(x)
+    x = Dropout(dropout_rate, name="Dropout70")(x)
+    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(21), name="Conv70")(x)
     x = BatchNormalization(name="Batch70")(x)
-    x = Dropout(0.2, name="Dropout70")(x)
-    x = DefaultConv2D(64, kernel_initializer=kernel_initializer(96), name="Conv71")(x)
+    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(96), name="Conv71")(x)
     x = BatchNormalization(name="Batch71")(x)
-    x = Dropout(0.2, name="Dropout71")(x)
-
-    x = Conv2DTranspose(
-        32,
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        kernel_initializer=kernel_initializer(96),
-        name="Up80",
-    )(x)
+    x = UpSample(name="Up80")(x)  # 32x32 -> 64x64
     x = Concatenate(name="Concat80")([level_2, x])
-    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(96), name="Conv80")(x)
+    x = Dropout(dropout_rate, name="Dropout80")(x)
+    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(96), name="Conv80")(x)
     x = BatchNormalization(name="Batch80")(x)
-    x = Dropout(0.2, name="Dropout80")(x)
-    x = DefaultConv2D(32, kernel_initializer=kernel_initializer(98), name="Conv81")(x)
+    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(98), name="Conv81")(x)
     x = BatchNormalization(name="Batch81")(x)
-    x = Dropout(0.2, name="Dropout81")(x)
-
-    x = Conv2DTranspose(
-        16,
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        kernel_initializer=kernel_initializer(35),
-        name="Up90",
-    )(x)
+    x = UpSample(name="Up90")(x)  # 64x64 -> 128x128
     x = Concatenate(name="Concat90")([level_1, x])
-    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(35), name="Conv90")(x)
+    x = Dropout(dropout_rate, name="Dropout90")(x)
+    x = DefaultConv2D(8, kernel_initializer=kernel_initializer(35), name="Conv90")(x)
     x = BatchNormalization(name="Batch90")(x)
-    x = Dropout(0.2, name="Dropout90")(x)
-    x = DefaultConv2D(16, kernel_initializer=kernel_initializer(7), name="Conv91")(x)
+    x = DefaultConv2D(8, kernel_initializer=kernel_initializer(7), name="Conv91")(x)
     x = BatchNormalization(name="Batch91")(x)
-    x = Dropout(0.2, name="Dropout91")(x)
-
-    # Final upsampling to match input size
-    x = Conv2DTranspose(
-        8,
-        kernel_size=2,
-        strides=2,
-        padding="same",
-        kernel_initializer=kernel_initializer(7),
-        name="Up92",
-    )(x)
+    x = UpSample(name="Up100")(x)  # 128x128 -> 256x256
+    x = DefaultConv2D(4, kernel_initializer=kernel_initializer(15), name="Conv100")(x)
+    x = BatchNormalization(name="Batch100")(x)
+    x = DefaultConv2D(4, kernel_initializer=kernel_initializer(23), name="Conv101")(x)
+    x = BatchNormalization(name="Batch101")(x)
     return x
 
 
 def build_scalar_reliability(x: Layer, n_scorers: int) -> Layer:
-    """Build scalar reliability branch (one value per scorer per image)"""
     x = GlobalAveragePooling2D()(x)
+    x = Dense(128, activation="relu", name="reliability_dense1")(x)
+    x = BatchNormalization(name="reliability_bn1")(x)
+    x = Dense(64, activation="relu", name="reliability_dense2")(x)
+    x = BatchNormalization(name="reliability_bn2")(x)
+    x = Dense(32, activation="relu", name="reliability_dense3")(x)
+    x = BatchNormalization(name="reliability_bn3")(x)
     x = Dense(n_scorers, activation="sigmoid", name="scalar_reliability")(x)
     return x
 
 
 def build_feature_reliability(x: Layer, n_scorers: int) -> Layer:
-    """Build feature-based reliability branch (reliability map from bottleneck features)"""
     x = DefaultConv2D(
         32, kernel_initializer=kernel_initializer(42), name="reliability_conv1"
     )(x)
@@ -202,7 +161,6 @@ def build_feature_reliability(x: Layer, n_scorers: int) -> Layer:
 
 
 def build_pixel_reliability(x: Layer, n_scorers: int) -> Layer:
-    """Build pixel-wise reliability branch (full resolution reliability map)"""
     x = DefaultConv2D(
         32, kernel_initializer=kernel_initializer(42), name="reliability_conv1"
     )(x)
@@ -223,9 +181,7 @@ def unet_tgce_scalar(
     n_classes: int,
     n_scorers: int,
     name: str = "UNET_TGCE_SCALAR",
-    out_act_functions: tuple[str, str] = ("softmax", "sigmoid"),
 ) -> Model:
-    """UNet with scalar reliability (one value per scorer per image)"""
     input_layer = Input(shape=input_shape)
     encoder = build_backbone_encoder(input_shape)
     level_1, level_2, level_3, level_4, x = encoder(input_layer)
@@ -234,7 +190,7 @@ def unet_tgce_scalar(
     seg_output = DefaultConv2D(
         n_classes,
         kernel_size=(1, 1),
-        activation=out_act_functions[0],
+        activation="softmax",
         kernel_initializer=kernel_initializer(42),
         name="segmentation_output",
     )(seg_branch)
@@ -253,7 +209,6 @@ def unet_tgce_features(
     name: str = "UNET_TGCE_FEATURES",
     out_act_functions: tuple[str, str] = ("softmax", "sigmoid"),
 ) -> Model:
-    """UNet with feature-based reliability (reliability map from bottleneck features)"""
     input_layer = Input(shape=input_shape)
     encoder = build_backbone_encoder(input_shape)
     level_1, level_2, level_3, level_4, x = encoder(input_layer)
@@ -279,9 +234,7 @@ def unet_tgce_pixel(
     n_classes: int,
     n_scorers: int,
     name: str = "UNET_TGCE_PIXEL",
-    out_act_functions: tuple[str, str] = ("softmax", "sigmoid"),
 ) -> Model:
-    """UNet with pixel-wise reliability (full resolution reliability map)"""
     input_layer = Input(shape=input_shape)
     encoder = build_backbone_encoder(input_shape)
     level_1, level_2, level_3, level_4, x = encoder(input_layer)
@@ -290,7 +243,7 @@ def unet_tgce_pixel(
     seg_output = DefaultConv2D(
         n_classes,
         kernel_size=(1, 1),
-        activation=out_act_functions[0],
+        activation="softmax",
         kernel_initializer=kernel_initializer(42),
         name="segmentation_output",
     )(seg_branch)
@@ -300,6 +253,28 @@ def unet_tgce_pixel(
     return ModelMultipleAnnotators(
         inputs=input_layer, outputs=[seg_output, rel_output], name=name
     )
+
+
+def unet_baseline(
+    input_shape: tuple[int, int, int],
+    n_classes: int,
+    name: str = "UNET_BASELINE",
+    dropout_rate: float = 0.2,
+) -> Model:
+    input_layer = Input(shape=input_shape)
+    encoder = build_backbone_encoder(input_shape)
+    level_1, level_2, level_3, level_4, x = encoder(input_layer)
+
+    seg_branch = build_decoder(x, level_1, level_2, level_3, level_4, dropout_rate)
+    seg_output = DefaultConv2D(
+        n_classes,
+        kernel_size=(1, 1),
+        activation="softmax",
+        kernel_initializer=kernel_initializer(42),
+        name="segmentation_output",
+    )(seg_branch)
+
+    return Model(inputs=input_layer, outputs=seg_output, name=name)
 
 
 if __name__ == "__main__":

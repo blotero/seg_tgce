@@ -1,8 +1,9 @@
 import numpy as np
+import tensorflow as tf
+
 from seg_tgce.data.oxford_pet.oxford_iiit_pet import OxfordIiitPet
 from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
-    get_data_multiple_annotators,
 )
 from seg_tgce.data.utils import (
     LabelerAssignmentManager,
@@ -43,7 +44,7 @@ def boyer_moore_majority_vote(votes):
     return majority
 
 
-def perform_majority_voting(masks, labeler_masks):
+def perform_majority_voting(masks: np.ndarray, labeler_masks: np.ndarray) -> np.ndarray:
     """
     Perform majority voting on predictions from multiple annotators using vectorized operations.
     Args:
@@ -52,30 +53,17 @@ def perform_majority_voting(masks, labeler_masks):
     Returns:
         numpy array of shape (batch_size, height, width, num_classes)
     """
-    # Get class predictions (argmax along class dimension)
-    class_predictions = np.argmax(
-        masks, axis=3
-    )  # shape: (batch_size, height, width, num_scorers)
+    class_predictions = np.argmax(masks, axis=3)
 
-    # Expand labeler_masks to match the spatial dimensions
-    expanded_labeler_masks = np.expand_dims(
-        np.expand_dims(labeler_masks, axis=1), axis=2
-    )
-    # shape: (batch_size, 1, 1, num_scorers)
+    expanded_labeler_masks = np.expand_dims(np.expand_dims(labeler_masks, axis=1), axis=2)
 
-    # Create a mask for valid predictions (where labeler_masks is 1)
     valid_predictions = class_predictions * expanded_labeler_masks
 
-    # Initialize output array
     majority_votes = np.zeros((*class_predictions.shape[:3], NUM_CLASSES))
 
-    # For each class, count votes
     for c in range(NUM_CLASSES):
-        # Count votes for this class (where prediction equals class)
         votes = (valid_predictions == c).astype(int)
-        # Sum votes across labelers
         vote_counts = np.sum(votes, axis=-1)
-        # Set to 1 where this class has the most votes
         majority_votes[..., c] = (vote_counts > 0) & (
             vote_counts >= np.max(vote_counts, axis=-1, keepdims=True)
         )
@@ -83,13 +71,12 @@ def perform_majority_voting(masks, labeler_masks):
     return majority_votes
 
 
-def evaluate_majority_voting(test_data):
+def evaluate_majority_voting(test_data: tf.data.Dataset) -> tuple[float, float]:
     """
     Evaluate majority voting on test data.
     Returns:
         tuple of (average_dice, average_jaccard)
     """
-    # Initialize metrics
     dice_fn = DiceCoefficient(
         num_classes=NUM_CLASSES,
         name="dice_coefficient",
@@ -99,7 +86,6 @@ def evaluate_majority_voting(test_data):
         name="jaccard_coefficient",
     )
 
-    # Process test data
     total_dice = 0
     total_jaccard = 0
     num_batches = 0
@@ -109,10 +95,8 @@ def evaluate_majority_voting(test_data):
         print(f"Processing batch {num} of {len(test_data)}")
         images, masks, labeled_by, ground_truth = batch
 
-        # Perform majority voting
         mv_predictions = perform_majority_voting(masks, labeled_by)
 
-        # Calculate metrics
         dice_score = dice_fn(ground_truth, mv_predictions)
         jaccard_score = jaccard_fn(ground_truth, mv_predictions)
 
@@ -120,15 +104,13 @@ def evaluate_majority_voting(test_data):
         total_jaccard += jaccard_score
         num_batches += 1
 
-    # Calculate average metrics
     avg_dice = total_dice / num_batches
     avg_jaccard = total_jaccard / num_batches
 
     return avg_dice, avg_jaccard
 
 
-def main():
-    # Fetch the disturbance models
+def main() -> None:
     disturbance_models = fetch_models(NOISE_LEVELS, seed=SEED)
 
     print("\nMajority Voting Results:")
@@ -139,7 +121,6 @@ def main():
     dataset = OxfordIiitPet()
     _, _, test_dataset = dataset()
     for labeling_rate in LABELING_RATES:
-
         labeler_manager = LabelerAssignmentManager(
             num_samples=len(test_dataset),
             num_labelers=len(disturbance_models),
@@ -156,10 +137,8 @@ def main():
             labeler_manager=labeler_manager,
         )
 
-        # Evaluate majority voting
         avg_dice, avg_jaccard = evaluate_majority_voting(test.cache())
 
-        # Print results
         print(f"{labeling_rate:<15.1f} {avg_dice:<20.4f} {avg_jaccard:<20.4f}")
 
 

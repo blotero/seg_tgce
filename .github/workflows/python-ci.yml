@@ -72,12 +72,13 @@ jobs:
       - name: Run mypy
         run: |
           cd core
-          poetry run mypy seg_tgce
+          poetry run mypy .
 
-      - name: Run pylint
+      - name: Run linter
         run: |
           cd core
-          poetry run pylint seg_tgce
+          poetry run ruff check .
+          poetry run ruff format --exit-non-zero-on-format .
 
   lint-docs:
     runs-on: ubuntu-22.04

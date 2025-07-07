@@ -1,4 +1,3 @@
-import tensorflow as tf
 from keras.models import load_model
 
 from seg_tgce.data.oxford_pet.disturbance.model import (

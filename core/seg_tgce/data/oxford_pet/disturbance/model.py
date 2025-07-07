@@ -9,7 +9,9 @@ from keras.layers import Conv2D, Layer, UpSampling2D
 from keras.models import Model, load_model
 from keras.saving import register_keras_serializable
 
-MODEL_PUBLIC_URL = "https://brandon-ai-models.s3.us-east-1.amazonaws.com/oxford_pet_seg_2025_05_06.keras"
+MODEL_PUBLIC_URL = (
+    "https://brandon-ai-models.s3.us-east-1.amazonaws.com/oxford_pet_seg_2025_05_06.keras"
+)
 
 
 @register_keras_serializable()

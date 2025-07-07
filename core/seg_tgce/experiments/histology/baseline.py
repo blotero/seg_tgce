@@ -1,58 +1,50 @@
 import argparse
 
-import keras_tuner as kt
-import tensorflow as tf
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
-from seg_tgce.data.crowd_seg.tfds_builder import (
-    N_CLASSES,
-    N_REAL_SCORERS,
-    get_processed_data,
-)
+from seg_tgce.data.crowd_seg.tfds_builder import N_CLASSES, get_processed_data_baseline
 from seg_tgce.experiments.plot_utils import plot_training_history, print_test_metrics
-from seg_tgce.models.builders import build_scalar_model_from_hparams
-from seg_tgce.models.ma_model import ScalarVisualizationCallback
+from seg_tgce.models.builders import (
+    build_baseline_model_from_hparams,
+)
+from seg_tgce.models.ma_model import BaselineVisualizationCallback
 
 from ..utils import handle_training
 
 TARGET_SHAPE = (256, 256)
 BATCH_SIZE = 32
 TRAIN_EPOCHS = 20
-TUNER_EPOCHS = 1
-MAX_TRIALS = 10
+TUNER_EPOCHS = 2
+MAX_TRIALS = 5
 
 DEFAULT_HPARAMS = {
-    "initial_learning_rate": 1e-3,
-    "q": 0.5,
-    "noise_tolerance": 0.5,
-    "a": 0.3,
-    "b": 0.7,
+    "q": 0.6,
+    "noise_tolerance": 0.2,
+    "dropout_rate": 0.2,
 }
 
 
-def build_model(hp: kt.HyperParameters | None = None) -> tf.keras.Model:
+def build_model(hp=None):
     if hp is None:
         params = DEFAULT_HPARAMS
     else:
         params = {
-            "initial_learning_rate": DEFAULT_HPARAMS["initial_learning_rate"],
             "q": hp.Float("q", min_value=0.1, max_value=0.9, step=0.1),
             "noise_tolerance": hp.Float(
                 "noise_tolerance", min_value=0.1, max_value=0.9, step=0.1
             ),
-            "b": hp.Float("b", min_value=0.1, max_value=1.0, step=0.1),
-            "a": hp.Float("a", min_value=0.1, max_value=1.0, step=0.1),
+            "dropout_rate": hp.Float(
+                "dropout_rate", min_value=0.0, max_value=0.5, step=0.1
+            ),
         }
 
-    return build_scalar_model_from_hparams(
-        learning_rate=params["initial_learning_rate"],
+    return build_baseline_model_from_hparams(
+        learning_rate=1e-3,
         q=params["q"],
         noise_tolerance=params["noise_tolerance"],
-        b=params["b"],
-        a=params["a"],
         num_classes=N_CLASSES,
         target_shape=TARGET_SHAPE,
-        n_scorers=N_REAL_SCORERS,
+        dropout_rate=params["dropout_rate"],
     )
 
 
@@ -67,11 +59,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    processed_train, processed_validation, processed_test = get_processed_data(
+    processed_train, processed_validation, processed_test = get_processed_data_baseline(
         image_size=TARGET_SHAPE,
         batch_size=BATCH_SIZE,
-        use_augmentation=True,
-        augmentation_factor=2,
+        # use_augmentation=True,
+        # augmentation_factor=2,
     )
 
     model = handle_training(
@@ -80,20 +72,18 @@ if __name__ == "__main__":
         model_builder=build_model,
         use_tuner=args.use_tuner,
         tuner_epochs=TUNER_EPOCHS,
-        objective="val_segmentation_output_dice_coefficient",
+        objective="val_dice_coefficient",
         tuner_max_trials=MAX_TRIALS,
     )
 
-    vis_callback = ScalarVisualizationCallback(
-        processed_validation, save_dir="vis/histology/scalar"
-    )
+    vis_callback = BaselineVisualizationCallback(processed_validation)
 
     lr_scheduler = ReduceLROnPlateau(
-        monitor="val_segmentation_output_dice_coefficient",
-        factor=0.5,
-        patience=3,
+        monitor="val_loss",
+        factor=0.2,
+        patience=4,
         min_lr=1e-6,
-        mode="max",
+        mode="min",
         verbose=1,
     )
 
@@ -107,13 +97,21 @@ if __name__ == "__main__":
             vis_callback,
             lr_scheduler,
             EarlyStopping(
-                monitor="val_segmentation_output_dice_coefficient",
-                patience=5,
+                monitor="val_dice_coefficient",
+                patience=3,
                 mode="max",
                 restore_best_weights=True,
             ),
         ],
     )
 
-    plot_training_history(history, "Histology Scalar Model Training History")
-    print_test_metrics(model, processed_test, "Histology Scalar")
+    plot_training_history(
+        history,
+        "Histology Baseline Model Training History",
+        ["loss", "dice_coefficient", "jaccard_coefficient"],
+    )
+    print_test_metrics(
+        model,
+        processed_test,
+        "Histology Baseline Model",
+    )
