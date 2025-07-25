@@ -18,9 +18,10 @@ from seg_tgce.data.utils import (
 from .oxford_iiit_pet import OxfordIiitPet
 
 MODEL_ORIGINAL_SHAPE = (512, 512)
+DEFAULT_SEED = 42
 
 
-def fetch_models(noise_levels_snr: list[float], seed: int | None = None) -> list[Model]:
+def fetch_models(noise_levels_snr: list[float], seed: int = DEFAULT_SEED) -> list[Model]:
     model_path = download_base_model()
     model_ann = load_model(
         model_path,

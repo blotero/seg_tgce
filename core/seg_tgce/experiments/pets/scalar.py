@@ -1,6 +1,5 @@
 import argparse
 
-import keras_tuner as kt
 from keras import Model
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
@@ -8,22 +7,23 @@ from seg_tgce.data.oxford_pet.oxford_pet import (
     fetch_models,
     get_data_multiple_annotators,
 )
-from seg_tgce.experiments.utils import handle_training
 from seg_tgce.experiments.plot_utils import plot_training_history, print_test_metrics
+from seg_tgce.experiments.types import HpTunerTrial
+from seg_tgce.experiments.utils import handle_training_optuna
 from seg_tgce.models.builders import build_scalar_model_from_hparams
 from seg_tgce.models.ma_model import ScalarVisualizationCallback
 
-TARGET_SHAPE = (256, 256)
+TARGET_SHAPE = (64, 64)
 BATCH_SIZE = 16
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 10.0]
 NUM_SCORERS = len(NOISE_LEVELS)
 TRAIN_EPOCHS = 50
 TUNER_EPOCHS = 10
-SEED = 42
 LABELING_RATE = 0.5
 TUNER_MAX_TRIALS = 10
-
+STUDY_NAME = "pets_scalar_tuning"
+OBJECTIVE = "val_segmentation_output_dice_coefficient"
 DEFAULT_HPARAMS = {
     "initial_learning_rate": 1e-3,
     "q": 0.7,
@@ -33,34 +33,25 @@ DEFAULT_HPARAMS = {
 }
 
 
-def build_model(hp: kt.HyperParameters | None = None) -> Model:
-    """Build model using hyperparameters.
-
-    Args:
-        hp: Optional Keras Tuner hyperparameters object. If None, uses default values.
-
-    Returns:
-        Compiled Keras model
-    """
-    if hp is None:
-        params = DEFAULT_HPARAMS
-    else:
-        params = {
-            "initial_learning_rate": DEFAULT_HPARAMS["initial_learning_rate"],
-            "q": hp.Float("q", min_value=0.1, max_value=0.9, step=0.1),
-            "noise_tolerance": hp.Float(
-                "noise_tolerance", min_value=0.1, max_value=0.9, step=0.1
-            ),
-            "b": hp.Float("b", min_value=0.1, max_value=1.0, step=0.1),
-            "a": hp.Float("a", min_value=0.1, max_value=1.0, step=0.1),
-        }
+def build_model_from_trial(trial: HpTunerTrial | None) -> Model:
+    if trial is None:
+        return build_scalar_model_from_hparams(
+            learning_rate=DEFAULT_HPARAMS["initial_learning_rate"],
+            q=DEFAULT_HPARAMS["q"],
+            noise_tolerance=DEFAULT_HPARAMS["noise_tolerance"],
+            b=DEFAULT_HPARAMS["b"],
+            a=DEFAULT_HPARAMS["a"],
+            num_classes=NUM_CLASSES,
+            target_shape=TARGET_SHAPE,
+            n_scorers=NUM_SCORERS,
+        )
 
     return build_scalar_model_from_hparams(
-        learning_rate=params["initial_learning_rate"],
-        q=params["q"],
-        noise_tolerance=params["noise_tolerance"],
-        b=params["b"],
-        a=params["a"],
+        learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
+        q=trial.suggest_float("q", 0.1, 0.9, step=0.01),
+        noise_tolerance=trial.suggest_float("noise_tolerance", 0.1, 0.9, step=0.01),
+        b=trial.suggest_float("b", 0.1, 1.0, step=0.01),
+        a=trial.suggest_float("a", 0.1, 1.0, step=0.01),
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=NUM_SCORERS,
@@ -78,7 +69,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    disturbance_models = fetch_models(NOISE_LEVELS, seed=SEED)
+    disturbance_models = fetch_models(NOISE_LEVELS)
     train, val, test = get_data_multiple_annotators(
         annotation_models=disturbance_models,
         target_shape=TARGET_SHAPE,
@@ -86,20 +77,21 @@ if __name__ == "__main__":
         labeling_rate=LABELING_RATE,
     )
 
-    model = handle_training(
+    model = handle_training_optuna(
         train,
         val,
-        model_builder=build_model,
+        model_builder=build_model_from_trial,
         use_tuner=args.use_tuner,
         tuner_epochs=TUNER_EPOCHS,
-        objective="val_segmentation_output_dice_coefficient",
+        objective=OBJECTIVE,
         tuner_max_trials=TUNER_MAX_TRIALS,
+        study_name=STUDY_NAME,
     )
 
     vis_callback = ScalarVisualizationCallback(val, save_dir="vis/pets/scalar")
 
     lr_scheduler = ReduceLROnPlateau(
-        monitor="val_segmentation_output_dice_coefficient",
+        monitor=OBJECTIVE,
         factor=0.5,
         patience=3,
         min_lr=1e-6,
@@ -116,7 +108,7 @@ if __name__ == "__main__":
             vis_callback,
             lr_scheduler,
             EarlyStopping(
-                monitor="val_segmentation_output_dice_coefficient",
+                monitor=OBJECTIVE,
                 patience=5,
                 mode="max",
                 restore_best_weights=True,

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any
 
 import tensorflow as tf
 from keras.losses import Loss
@@ -6,8 +6,6 @@ from tensorflow import Tensor
 from tensorflow import float32 as tf_float32
 
 TARGET_DATA_TYPE = tf_float32
-
-ReliabilityType = Literal["scalar", "features", "pixel"]
 
 
 def safe_divide(numerator: Tensor, denominator: Tensor, epsilon: float = 1e-8) -> Tensor:
