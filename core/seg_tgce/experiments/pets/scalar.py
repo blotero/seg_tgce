@@ -30,6 +30,10 @@ DEFAULT_HPARAMS = {
     "noise_tolerance": 0.5,
     "a": 0.2,
     "b": 0.7,
+    "c": 1.0,
+    "lambda_reg_weight": 0.1,
+    "lambda_entropy_weight": 0.1,
+    "lambda_sum_weight": 0.1,
 }
 
 
@@ -40,7 +44,11 @@ def build_model_from_trial(trial: HpTunerTrial | None) -> Model:
             q=DEFAULT_HPARAMS["q"],
             noise_tolerance=DEFAULT_HPARAMS["noise_tolerance"],
             b=DEFAULT_HPARAMS["b"],
+            c=DEFAULT_HPARAMS["c"],
             a=DEFAULT_HPARAMS["a"],
+            lambda_reg_weight=DEFAULT_HPARAMS["lambda_reg_weight"],
+            lambda_entropy_weight=DEFAULT_HPARAMS["lambda_entropy_weight"],
+            lambda_sum_weight=DEFAULT_HPARAMS["lambda_sum_weight"],
             num_classes=NUM_CLASSES,
             target_shape=TARGET_SHAPE,
             n_scorers=NUM_SCORERS,
@@ -52,6 +60,12 @@ def build_model_from_trial(trial: HpTunerTrial | None) -> Model:
         noise_tolerance=trial.suggest_float("noise_tolerance", 0.1, 0.9, step=0.01),
         b=trial.suggest_float("b", 0.1, 1.0, step=0.01),
         a=trial.suggest_float("a", 0.1, 1.0, step=0.01),
+        c=trial.suggest_float("c", 0.1, 10.0, step=0.1),
+        lambda_reg_weight=trial.suggest_float("lambda_reg_weight", 0.0, 10.0, step=0.1),
+        lambda_entropy_weight=trial.suggest_float(
+            "lambda_entropy_weight", 0.0, 10.0, step=0.1
+        ),
+        lambda_sum_weight=trial.suggest_float("lambda_sum_weight", 0.0, 10.0, step=0.1),
         num_classes=NUM_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=NUM_SCORERS,

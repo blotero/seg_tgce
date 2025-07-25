@@ -27,6 +27,10 @@ DEFAULT_HPARAMS = {
     "noise_tolerance": 0.5,
     "a": 0.3,
     "b": 0.7,
+    "c": 1.0,
+    "lambda_reg_weight": 0.1,
+    "lambda_entropy_weight": 0.1,
+    "lambda_sum_weight": 0.1,
 }
 
 
@@ -40,16 +44,27 @@ def build_model(hp: kt.HyperParameters | None = None) -> tf.keras.Model:
             "noise_tolerance": hp.Float(
                 "noise_tolerance", min_value=0.1, max_value=0.9, step=0.1
             ),
-            "b": hp.Float("b", min_value=0.1, max_value=1.0, step=0.1),
             "a": hp.Float("a", min_value=0.1, max_value=1.0, step=0.1),
+            "b": hp.Float("b", min_value=0.1, max_value=1.0, step=0.1),
+            "c": hp.Float("c", min_value=0.1, max_value=10.0, step=0.1),
+            "lambda_reg_weight": hp.Float(
+                "lambda_reg_weight", min_value=0.0, max_value=10.0, step=0.1
+            ),
+            "lambda_entropy_weight": hp.Float(
+                "lambda_entropy_weight", min_value=0.0, max_value=10.0, step=0.1
+            ),
         }
 
     return build_scalar_model_from_hparams(
         learning_rate=params["initial_learning_rate"],
         q=params["q"],
         noise_tolerance=params["noise_tolerance"],
-        b=params["b"],
         a=params["a"],
+        b=params["b"],
+        c=params["c"],
+        lambda_reg_weight=params["lambda_reg_weight"],
+        lambda_entropy_weight=params["lambda_entropy_weight"],
+        lambda_sum_weight=params["lambda_sum_weight"],
         num_classes=N_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=N_REAL_SCORERS,
