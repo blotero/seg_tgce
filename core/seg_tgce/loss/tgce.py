@@ -9,18 +9,23 @@ TARGET_DATA_TYPE = tf_float32
 
 
 def safe_divide(numerator: Tensor, denominator: Tensor, epsilon: float = 1e-8) -> Tensor:
-    """Safely divide two tensors, avoiding division by zero."""
     return tf.math.divide(
         numerator, tf.clip_by_value(denominator, epsilon, tf.reduce_max(denominator))
     )
 
 
 def safe_pow(x: Tensor, p: Tensor, epsilon: float = 1e-8) -> Tensor:
-    """Compute x^p safely by ensuring x is within a valid range."""
     return tf.pow(tf.clip_by_value(x, epsilon, 1.0 - epsilon), p)
 
 
-class TcgeScalar(Loss):
+def reliability_penalizer(
+    lms: Tensor, lambdas: Tensor, a: float, b: float, c: float
+) -> Tensor:
+    x = lambdas - lms
+    return c * tf.maximum(1 / (1 - a) * x * tf.exp((x - 1) / b), 0)
+
+
+class TgceScalar(Loss):
     """
     Truncated generalized cross entropy
     for semantic segmentation loss.
@@ -35,6 +40,10 @@ class TcgeScalar(Loss):
         noise_tolerance: float = 0.1,
         a: float = 0.7,
         b: float = 0.7,
+        c: float = 1.0,
+        lambda_reg_weight: float = 0.1,
+        lambda_entropy_weight: float = 0.1,
+        lambda_sum_weight: float = 0.1,
         epsilon: float = 1e-8,
     ) -> None:
         self.q = q
@@ -42,13 +51,12 @@ class TcgeScalar(Loss):
         self.noise_tolerance = noise_tolerance
         self.a = a
         self.b = b
+        self.c = c
+        self.lambda_reg_weight = lambda_reg_weight
+        self.lambda_entropy_weight = lambda_entropy_weight
+        self.lambda_sum_weight = lambda_sum_weight
         self.epsilon = epsilon
         super().__init__(name=name)
-
-    def penalizer(self, lms: tf.Tensor, lambdas: tf.Tensor) -> tf.Tensor:
-        """Compute the penalizer term for reliability regularization."""
-        x = lambdas - lms
-        return tf.maximum(1 / (1 - self.a) * x * tf.exp((x - 1) / self.b), 0)
 
     def call(
         self,
@@ -57,10 +65,15 @@ class TcgeScalar(Loss):
         lambda_r: tf.Tensor,
         labeler_mask: tf.Tensor,
     ) -> tf.Tensor:
+        # Cast inputs to target data type
+        y_true = tf.cast(y_true, TARGET_DATA_TYPE)
+        y_pred = tf.cast(y_pred, TARGET_DATA_TYPE)
+        lambda_r = tf.cast(lambda_r, TARGET_DATA_TYPE)
+
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
 
-        reg_term = self.penalizer(labeler_mask, lambda_r)
+        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
 
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
         y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
@@ -78,7 +91,28 @@ class TcgeScalar(Loss):
             (1.0 - tf.pow(self.noise_tolerance, self.q)) / (self.q + self.epsilon)
         )
 
-        total_loss = tf.reduce_mean(term1 + term2) + reg_term
+        # Only compute regularization terms for valid labelers
+        valid_lambda_r = lambda_r * tf.expand_dims(tf.expand_dims(labeler_mask, 1), 1)
+        lambda_reg = self.lambda_reg_weight * tf.reduce_mean(
+            tf.square(valid_lambda_r - 0.5)
+        )
+
+        lambda_entropy = -self.lambda_entropy_weight * tf.reduce_mean(
+            valid_lambda_r * tf.math.log1p(valid_lambda_r)
+            + (1 - valid_lambda_r) * tf.math.log1p(1 - valid_lambda_r)
+        )
+
+        lambda_sum = self.lambda_sum_weight * tf.reduce_mean(
+            tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0)
+        )
+
+        total_loss = (
+            tf.reduce_mean(term1 + term2)
+            + reg_term
+            + lambda_reg
+            + lambda_entropy
+            + lambda_sum
+        )
 
         total_loss = tf.where(
             tf.math.is_nan(total_loss),
@@ -99,11 +133,14 @@ class TcgeScalar(Loss):
             **base_config,
             "q": self.q,
             "b": self.b,
+            "lambda_reg_weight": self.lambda_reg_weight,
+            "lambda_entropy_weight": self.lambda_entropy_weight,
+            "lambda_sum_weight": self.lambda_sum_weight,
             "epsilon": self.epsilon,
         }
 
 
-class TcgeFeatures(Loss):
+class TgceFeatures(Loss):
     """
     Truncated generalized cross entropy for semantic segmentation loss
     with feature-based reliability (reliability map from bottleneck features).
@@ -210,7 +247,7 @@ class TcgeFeatures(Loss):
         }
 
 
-class TcgePixel(Loss):
+class TgcePixel(Loss):
     """
     Truncated generalized cross entropy for semantic segmentation loss
     with pixel-wise reliability (full resolution reliability map).

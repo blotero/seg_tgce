@@ -12,3 +12,4 @@ __data__
 **/results/**
 tuner_results/
 **/vis/
+**/optuna_results/
