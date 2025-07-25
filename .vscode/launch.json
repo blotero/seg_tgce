@@ -23,6 +23,7 @@
             "module": "seg_tgce.experiments.pets.scalar",
             "console": "integratedTerminal",
             "justMyCode": true,
+            "args": ["--use-tuner"],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
@@ -34,9 +35,10 @@
             "module": "seg_tgce.experiments.pets.features",
             "console": "integratedTerminal",
             "justMyCode": true,
+            "args": ["--use-tuner"],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
         },
         {
             "name": "Poetry: Oxford pet pixel experiment",
@@ -45,9 +47,10 @@
             "module": "seg_tgce.experiments.pets.pixel",
             "console": "integratedTerminal",
             "justMyCode": true,
+            "args": ["--use-tuner"],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
-            }
+            },
         },
         {
             "name": "Poetry: Histology baseline experiment",
