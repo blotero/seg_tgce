@@ -36,7 +36,7 @@ def handle_training(
 
         print("Starting hyperparameter search...")
         tuner.search(
-            train_gen.take(10),
+            train_gen,
             epochs=tuner_epochs,
             validation_data=val_gen,
         )
@@ -134,7 +134,7 @@ def handle_training_optuna(
 
         best_hps = study.best_trial
         print("\nBest hyperparameters:")
-        for param, value in best_hps.values.items():
+        for param, value in best_hps.params.items():
             print(f"{param}: {value}")
 
         create_importance_visualizations(study)

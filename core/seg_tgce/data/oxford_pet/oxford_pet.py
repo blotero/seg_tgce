@@ -77,7 +77,7 @@ def get_data_multiple_annotators(
         )
         for data, labeler_manager in (
             (
-                train_dataset.cache().shuffle(1000).repeat(2).prefetch(tf.data.AUTOTUNE),
+                train_dataset.shuffle(1000).prefetch(tf.data.AUTOTUNE),
                 train_labeler_manager,
             ),
             (val_dataset.prefetch(tf.data.AUTOTUNE), None),
