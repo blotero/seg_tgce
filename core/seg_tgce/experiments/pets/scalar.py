@@ -13,7 +13,7 @@ from seg_tgce.experiments.utils import handle_training_optuna
 from seg_tgce.models.builders import build_scalar_model_from_hparams
 from seg_tgce.models.ma_model import ScalarVisualizationCallback
 
-TARGET_SHAPE = (128, 128)
+TARGET_SHAPE = (256, 256)
 BATCH_SIZE = 16
 NUM_CLASSES = 3
 NOISE_LEVELS = [-20.0, 10.0]
@@ -24,6 +24,7 @@ LABELING_RATE = 0.5
 TUNER_MAX_TRIALS = 3
 STUDY_NAME = "pets_scalar_tuning"
 OBJECTIVE = "val_segmentation_output_dice_coefficient"
+
 DEFAULT_HPARAMS = {
     "initial_learning_rate": 1e-3,
     "q": 0.7,

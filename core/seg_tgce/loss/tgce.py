@@ -153,11 +153,17 @@ class TgceFeatures(Loss):
         name: str = "TGCE_SS_FEATURES",
         q: float = 0.1,
         noise_tolerance: float = 0.1,
+        a: float = 0.7,
+        b: float = 0.7,
+        c: float = 1.0,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
         lambda_sum_weight: float = 0.1,
         epsilon: float = 1e-8,
     ) -> None:
+        self.a = a
+        self.b = b
+        self.c = c
         self.q = q
         self.num_classes = num_classes
         self.noise_tolerance = noise_tolerance
@@ -182,6 +188,7 @@ class TgceFeatures(Loss):
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
 
+        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
         y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
@@ -219,7 +226,11 @@ class TgceFeatures(Loss):
         )
 
         total_loss = (
-            tf.reduce_mean(term1 + term2) + lambda_reg + lambda_entropy + lambda_sum
+            tf.reduce_mean(term1 + term2)
+            + reg_term
+            + lambda_reg
+            + lambda_entropy
+            + lambda_sum
         )
 
         total_loss = tf.where(
@@ -260,11 +271,17 @@ class TgcePixel(Loss):
         name: str = "TGCE_SS_PIXEL",
         q: float = 0.1,
         noise_tolerance: float = 0.1,
+        a: float = 0.7,
+        b: float = 0.7,
+        c: float = 1.0,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
         lambda_sum_weight: float = 0.1,
         epsilon: float = 1e-8,
     ) -> None:
+        self.a = a
+        self.b = b
+        self.c = c
         self.q = q
         self.num_classes = num_classes
         self.noise_tolerance = noise_tolerance
@@ -288,6 +305,7 @@ class TgcePixel(Loss):
 
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
+        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
 
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
@@ -320,7 +338,11 @@ class TgcePixel(Loss):
         )
 
         total_loss = (
-            tf.reduce_mean(term1 + term2) + lambda_reg + lambda_entropy + lambda_sum
+            tf.reduce_mean(term1 + term2)
+            + reg_term
+            + lambda_reg
+            + lambda_entropy
+            + lambda_sum
         )
 
         total_loss = tf.where(
