@@ -188,7 +188,11 @@ class TgceFeatures(Loss):
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
 
-        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
+        lambda_r_reduced = tf.reduce_mean(lambda_r, axis=(1, 2))
+
+        reg_term = reliability_penalizer(
+            labeler_mask, lambda_r_reduced, self.a, self.b, self.c
+        )
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
         y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
@@ -222,7 +226,7 @@ class TgceFeatures(Loss):
         )
 
         lambda_sum = self.lambda_sum_weight * tf.reduce_mean(
-            tf.square(tf.reduce_sum(valid_lambda_r, axis=-2) - 1.0)
+            tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0)
         )
 
         total_loss = (
@@ -305,7 +309,12 @@ class TgcePixel(Loss):
 
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
-        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
+
+        lambda_r_reduced = tf.reduce_mean(lambda_r, axis=(1, 2))
+
+        reg_term = reliability_penalizer(
+            labeler_mask, lambda_r_reduced, self.a, self.b, self.c
+        )
 
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)

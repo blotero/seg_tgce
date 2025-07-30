@@ -13,8 +13,8 @@ from seg_tgce.models.ma_model import FeatureVisualizationCallback
 
 from ..utils import handle_training
 
-TARGET_SHAPE = (256, 256)
-BATCH_SIZE = 32
+TARGET_SHAPE = (128, 128)
+BATCH_SIZE = 4
 TRAIN_EPOCHS = 20
 TUNER_EPOCHS = 1
 
@@ -22,6 +22,9 @@ DEFAULT_HPARAMS = {
     "initial_learning_rate": 1e-3,
     "q": 0.5,
     "noise_tolerance": 0.5,
+    "a": 0.5,
+    "b": 0.5,
+    "c": 1.0,
     "lambda_reg_weight": 0.1,
     "lambda_entropy_weight": 0.1,
     "lambda_sum_weight": 0.1,
@@ -49,12 +52,18 @@ def build_model(hp=None):
             "lambda_sum_weight": hp.Float(
                 "lambda_sum_weight", min_value=0.01, max_value=0.5, step=0.01
             ),
+            "a": hp.Float("a", min_value=0.0, max_value=1.0, step=0.1),
+            "b": hp.Float("b", min_value=0.0, max_value=1.0, step=0.1),
+            "c": hp.Float("c", min_value=0.0, max_value=1.0, step=0.1),
         }
 
     return build_features_model_from_hparams(
         learning_rate=params["initial_learning_rate"],
         q=params["q"],
         noise_tolerance=params["noise_tolerance"],
+        a=params["a"],
+        b=params["b"],
+        c=params["c"],
         lambda_reg_weight=params["lambda_reg_weight"],
         lambda_entropy_weight=params["lambda_entropy_weight"],
         lambda_sum_weight=params["lambda_sum_weight"],
@@ -76,10 +85,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     processed_train, processed_validation, processed_test = get_processed_data(
-        image_size=TARGET_SHAPE,
-        batch_size=BATCH_SIZE,
-        use_augmentation=True,
-        augmentation_factor=2,
+        image_size=TARGET_SHAPE, batch_size=BATCH_SIZE, use_augmentation=False
     )
 
     model = handle_training(
