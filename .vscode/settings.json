@@ -16,5 +16,5 @@
   },
   "workbench.colorTheme": "Gruvbox Dark Hard",
   "mypy-type-checker.cwd": "${nearestConfig}",
-  "python.defaultInterpreterPath": "${workspaceFolder}/core/.venv/bin/python"
+  "python.defaultInterpreterPath": "${workspaceFolder}/core/.env/bin/python"
 }

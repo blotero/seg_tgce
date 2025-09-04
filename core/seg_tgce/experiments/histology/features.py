@@ -1,5 +1,6 @@
 import argparse
 
+from keras import Model
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from seg_tgce.data.crowd_seg.tfds_builder import (
@@ -8,15 +9,19 @@ from seg_tgce.data.crowd_seg.tfds_builder import (
     get_processed_data,
 )
 from seg_tgce.experiments.plot_utils import plot_training_history, print_test_metrics
+from seg_tgce.experiments.types import HpTunerTrial
 from seg_tgce.models.builders import build_features_model_from_hparams
 from seg_tgce.models.ma_model import FeatureVisualizationCallback
 
-from ..utils import handle_training
+from ..utils import handle_training_optuna
 
-TARGET_SHAPE = (128, 128)
+TARGET_SHAPE = (256, 256)
 BATCH_SIZE = 4
 TRAIN_EPOCHS = 20
 TUNER_EPOCHS = 1
+TUNER_MAX_TRIALS = 10
+STUDY_NAME = "histology_features_tuning"
+OBJECTIVE = "val_segmentation_output_dice_coefficient"
 
 DEFAULT_HPARAMS = {
     "initial_learning_rate": 1e-3,
@@ -24,49 +29,39 @@ DEFAULT_HPARAMS = {
     "noise_tolerance": 0.5,
     "a": 0.5,
     "b": 0.5,
-    "c": 1.0,
     "lambda_reg_weight": 0.1,
     "lambda_entropy_weight": 0.1,
     "lambda_sum_weight": 0.1,
 }
 
 
-def build_model(hp=None):
-    if hp is None:
-        params = DEFAULT_HPARAMS
-    else:
-        params = {
-            "initial_learning_rate": hp.Float(
-                "learning_rate", min_value=1e-5, max_value=1e-2, sampling="LOG"
-            ),
-            "q": hp.Float("q", min_value=0.1, max_value=0.9, step=0.1),
-            "noise_tolerance": hp.Float(
-                "noise_tolerance", min_value=0.1, max_value=0.9, step=0.1
-            ),
-            "lambda_reg_weight": hp.Float(
-                "lambda_reg_weight", min_value=0.01, max_value=0.5, step=0.01
-            ),
-            "lambda_entropy_weight": hp.Float(
-                "lambda_entropy_weight", min_value=0.01, max_value=0.5, step=0.01
-            ),
-            "lambda_sum_weight": hp.Float(
-                "lambda_sum_weight", min_value=0.01, max_value=0.5, step=0.01
-            ),
-            "a": hp.Float("a", min_value=0.0, max_value=1.0, step=0.1),
-            "b": hp.Float("b", min_value=0.0, max_value=1.0, step=0.1),
-            "c": hp.Float("c", min_value=0.0, max_value=1.0, step=0.1),
-        }
+def build_model_from_trial(trial: HpTunerTrial | None) -> Model:
+    if trial is None:
+        return build_features_model_from_hparams(
+            learning_rate=DEFAULT_HPARAMS["initial_learning_rate"],
+            q=DEFAULT_HPARAMS["q"],
+            noise_tolerance=DEFAULT_HPARAMS["noise_tolerance"],
+            b=DEFAULT_HPARAMS["b"],
+            a=DEFAULT_HPARAMS["a"],
+            lambda_reg_weight=DEFAULT_HPARAMS["lambda_reg_weight"],
+            lambda_entropy_weight=DEFAULT_HPARAMS["lambda_entropy_weight"],
+            lambda_sum_weight=DEFAULT_HPARAMS["lambda_sum_weight"],
+            num_classes=N_CLASSES,
+            target_shape=TARGET_SHAPE,
+            n_scorers=N_REAL_SCORERS,
+        )
 
     return build_features_model_from_hparams(
-        learning_rate=params["initial_learning_rate"],
-        q=params["q"],
-        noise_tolerance=params["noise_tolerance"],
-        a=params["a"],
-        b=params["b"],
-        c=params["c"],
-        lambda_reg_weight=params["lambda_reg_weight"],
-        lambda_entropy_weight=params["lambda_entropy_weight"],
-        lambda_sum_weight=params["lambda_sum_weight"],
+        learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
+        q=trial.suggest_float("q", 0.1, 0.9, step=0.01),
+        noise_tolerance=trial.suggest_float("noise_tolerance", 0.1, 0.9, step=0.01),
+        a=trial.suggest_float("a", 0.1, 10.0, step=0.1),
+        b=trial.suggest_float("b", 0.1, 0.99, step=0.01),
+        lambda_reg_weight=trial.suggest_float("lambda_reg_weight", 0.0, 10.0, step=0.1),
+        lambda_entropy_weight=trial.suggest_float(
+            "lambda_entropy_weight", 0.0, 10.0, step=0.1
+        ),
+        lambda_sum_weight=trial.suggest_float("lambda_sum_weight", 0.0, 10.0, step=0.1),
         num_classes=N_CLASSES,
         target_shape=TARGET_SHAPE,
         n_scorers=N_REAL_SCORERS,
@@ -88,13 +83,13 @@ if __name__ == "__main__":
         image_size=TARGET_SHAPE, batch_size=BATCH_SIZE, use_augmentation=False
     )
 
-    model = handle_training(
+    model = handle_training_optuna(
         processed_train,
         processed_validation,
-        model_builder=build_model,
+        model_builder=build_model_from_trial,
         use_tuner=args.use_tuner,
         tuner_epochs=TUNER_EPOCHS,
-        objective="val_segmentation_output_dice_coefficient",
+        objective=OBJECTIVE,
     )
 
     vis_callback = FeatureVisualizationCallback(
@@ -102,7 +97,7 @@ if __name__ == "__main__":
     )
 
     lr_scheduler = ReduceLROnPlateau(
-        monitor="val_segmentation_output_dice_coefficient",
+        monitor=OBJECTIVE,
         factor=0.5,
         patience=3,
         min_lr=1e-6,
@@ -120,7 +115,7 @@ if __name__ == "__main__":
             vis_callback,
             lr_scheduler,
             EarlyStopping(
-                monitor="val_segmentation_output_dice_coefficient",
+                monitor=OBJECTIVE,
                 patience=5,
                 mode="max",
                 restore_best_weights=True,
