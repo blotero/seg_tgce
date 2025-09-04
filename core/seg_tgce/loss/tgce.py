@@ -18,11 +18,9 @@ def safe_pow(x: Tensor, p: Tensor, epsilon: float = 1e-8) -> Tensor:
     return tf.pow(tf.clip_by_value(x, epsilon, 1.0 - epsilon), p)
 
 
-def reliability_penalizer(
-    lms: Tensor, lambdas: Tensor, a: float, b: float, c: float
-) -> Tensor:
+def reliability_penalizer(lms: Tensor, lambdas: Tensor, a: float, b: float) -> Tensor:
     x = lambdas - lms
-    return c * tf.maximum(1 / (1 - a) * x * tf.exp((x - 1) / b), 0)
+    return a * tf.maximum(x * tf.exp((x - 1) / b), 0)
 
 
 class TgceScalar(Loss):
@@ -40,7 +38,6 @@ class TgceScalar(Loss):
         noise_tolerance: float = 0.1,
         a: float = 0.7,
         b: float = 0.7,
-        c: float = 1.0,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
         lambda_sum_weight: float = 0.1,
@@ -51,7 +48,6 @@ class TgceScalar(Loss):
         self.noise_tolerance = noise_tolerance
         self.a = a
         self.b = b
-        self.c = c
         self.lambda_reg_weight = lambda_reg_weight
         self.lambda_entropy_weight = lambda_entropy_weight
         self.lambda_sum_weight = lambda_sum_weight
@@ -73,7 +69,7 @@ class TgceScalar(Loss):
         y_pred = tf.clip_by_value(y_pred, self.epsilon, 1.0 - self.epsilon)
         lambda_r = tf.clip_by_value(lambda_r, self.epsilon, 1.0 - self.epsilon)
 
-        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b, self.c)
+        reg_term = reliability_penalizer(labeler_mask, lambda_r, self.a, self.b)
 
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
         y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
@@ -155,7 +151,6 @@ class TgceFeatures(Loss):
         noise_tolerance: float = 0.1,
         a: float = 0.7,
         b: float = 0.7,
-        c: float = 1.0,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
         lambda_sum_weight: float = 0.1,
@@ -163,7 +158,6 @@ class TgceFeatures(Loss):
     ) -> None:
         self.a = a
         self.b = b
-        self.c = c
         self.q = q
         self.num_classes = num_classes
         self.noise_tolerance = noise_tolerance
@@ -190,9 +184,7 @@ class TgceFeatures(Loss):
 
         lambda_r_reduced = tf.reduce_mean(lambda_r, axis=(1, 2))
 
-        reg_term = reliability_penalizer(
-            labeler_mask, lambda_r_reduced, self.a, self.b, self.c
-        )
+        reg_term = reliability_penalizer(labeler_mask, lambda_r_reduced, self.a, self.b)
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
         y_pred_exp = tf.tile(y_pred_exp, [1, 1, 1, 1, tf.shape(y_true)[-1]])
@@ -277,7 +269,6 @@ class TgcePixel(Loss):
         noise_tolerance: float = 0.1,
         a: float = 0.7,
         b: float = 0.7,
-        c: float = 1.0,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
         lambda_sum_weight: float = 0.1,
@@ -285,7 +276,6 @@ class TgcePixel(Loss):
     ) -> None:
         self.a = a
         self.b = b
-        self.c = c
         self.q = q
         self.num_classes = num_classes
         self.noise_tolerance = noise_tolerance
@@ -312,9 +302,7 @@ class TgcePixel(Loss):
 
         lambda_r_reduced = tf.reduce_mean(lambda_r, axis=(1, 2))
 
-        reg_term = reliability_penalizer(
-            labeler_mask, lambda_r_reduced, self.a, self.b, self.c
-        )
+        reg_term = reliability_penalizer(labeler_mask, lambda_r_reduced, self.a, self.b)
 
         # Expand predictions to match annotators dimension
         y_pred_exp = tf.expand_dims(y_pred, axis=-1)
