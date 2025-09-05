@@ -85,7 +85,7 @@ if __name__ == "__main__":
         augmentation_factor=2,
     )
 
-    model = handle_training_optuna(
+    model, study = handle_training_optuna(
         processed_train,
         processed_validation,
         model_builder=build_model_from_trial,

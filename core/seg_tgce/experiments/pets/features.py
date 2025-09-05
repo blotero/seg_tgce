@@ -87,7 +87,7 @@ if __name__ == "__main__":
         labeling_rate=1.0,
     )
 
-    model = handle_training_optuna(
+    model, study = handle_training_optuna(
         train.take(10).cache(),
         val.take(10).cache(),
         model_builder=build_model_from_trial,

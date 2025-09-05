@@ -83,7 +83,7 @@ if __name__ == "__main__":
         image_size=TARGET_SHAPE, batch_size=BATCH_SIZE, use_augmentation=False
     )
 
-    model = handle_training_optuna(
+    model, study = handle_training_optuna(
         processed_train,
         processed_validation,
         model_builder=build_model_from_trial,
