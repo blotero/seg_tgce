@@ -101,7 +101,7 @@ def handle_training_optuna(
     objective: str,
     tuner_max_trials: int = 10,
     study_name: str = "experiment_hp_tuning",
-) -> Model:
+) -> tuple[Model, optuna.Study | None]:
     print("Training with default hyperparameters...")
 
     def _objective(trial: optuna.Trial) -> float:
@@ -139,7 +139,7 @@ def handle_training_optuna(
 
         create_importance_visualizations(study)
 
-        return model_builder(best_hps)
+        return model_builder(best_hps), study
 
     print("Training with default hyperparameters...")
-    return model_builder(None)
+    return model_builder(None), None
