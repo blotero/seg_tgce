@@ -40,7 +40,7 @@ class TgceScalar(Loss):
         b: float = 0.7,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
-        lambda_sum_weight: float = 0.1,
+        lambda_sum_weight: float | None = None,
         epsilon: float = 1e-8,
     ) -> None:
         self.q = q
@@ -98,8 +98,11 @@ class TgceScalar(Loss):
             + (1 - valid_lambda_r) * tf.math.log1p(1 - valid_lambda_r)
         )
 
-        lambda_sum = self.lambda_sum_weight * tf.reduce_mean(
-            tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0)
+        lambda_sum = (
+            self.lambda_sum_weight
+            * tf.reduce_mean(tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0))
+            if self.lambda_sum_weight is not None
+            else 0.0
         )
 
         total_loss = (
@@ -153,7 +156,7 @@ class TgceFeatures(Loss):
         b: float = 0.7,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
-        lambda_sum_weight: float = 0.1,
+        lambda_sum_weight: float | None = None,
         epsilon: float = 1e-8,
     ) -> None:
         self.a = a
@@ -217,8 +220,11 @@ class TgceFeatures(Loss):
             + (1 - valid_lambda_r) * tf.math.log1p(1 - valid_lambda_r)
         )
 
-        lambda_sum = self.lambda_sum_weight * tf.reduce_mean(
-            tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0)
+        lambda_sum = (
+            self.lambda_sum_weight
+            * tf.reduce_mean(tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0))
+            if self.lambda_sum_weight is not None
+            else 0.0
         )
 
         total_loss = (
@@ -271,7 +277,7 @@ class TgcePixel(Loss):
         b: float = 0.7,
         lambda_reg_weight: float = 0.1,
         lambda_entropy_weight: float = 0.1,
-        lambda_sum_weight: float = 0.1,
+        lambda_sum_weight: float | None = None,
         epsilon: float = 1e-8,
     ) -> None:
         self.a = a
@@ -330,8 +336,11 @@ class TgcePixel(Loss):
             + (1 - valid_lambda_r) * tf.math.log1p(1 - valid_lambda_r)
         )
 
-        lambda_sum = self.lambda_sum_weight * tf.reduce_mean(
-            tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0)
+        lambda_sum = (
+            self.lambda_sum_weight
+            * tf.reduce_mean(tf.square(tf.reduce_sum(valid_lambda_r, axis=-1) - 1.0))
+            if self.lambda_sum_weight is not None
+            else 0.0
         )
 
         total_loss = (

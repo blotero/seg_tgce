@@ -24,9 +24,9 @@ STUDY_NAME = "histology_features_tuning"
 OBJECTIVE = "val_segmentation_output_dice_coefficient"
 
 DEFAULT_HPARAMS = {
-    "initial_learning_rate": 1e-3,
-    "q": 0.5,
-    "noise_tolerance": 0.5,
+    "initial_learning_rate": 6.5e-4,
+    "q": 0.66,
+    "noise_tolerance": 0.62,
     "a": 0.5,
     "b": 0.5,
     "lambda_reg_weight": 0.1,
@@ -52,9 +52,9 @@ def build_model_from_trial(trial: HpTunerTrial | None) -> Model:
         )
 
     return build_features_model_from_hparams(
-        learning_rate=trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
-        q=trial.suggest_float("q", 0.1, 0.9, step=0.01),
-        noise_tolerance=trial.suggest_float("noise_tolerance", 0.1, 0.9, step=0.01),
+        learning_rate=DEFAULT_HPARAMS["initial_learning_rate"],
+        q=DEFAULT_HPARAMS["q"],
+        noise_tolerance=DEFAULT_HPARAMS["noise_tolerance"],
         a=trial.suggest_float("a", 0.1, 10.0, step=0.1),
         b=trial.suggest_float("b", 0.1, 0.99, step=0.01),
         lambda_reg_weight=trial.suggest_float("lambda_reg_weight", 0.0, 10.0, step=0.1),
