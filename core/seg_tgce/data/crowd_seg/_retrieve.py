@@ -13,8 +13,8 @@ logging.basicConfig(level=logging.INFO)
 
 _TARGET_DIR = "__data__/crowd_seg"
 _BUCKET_NAME = "crowd-seg-data"
-PATCHES_OBJECT_NAME = "patches_refined.zip"
-MASKS_OBJECT_NAME = "masks_refined.zip"
+PATCHES_OBJECT_NAME = "patches_refined_v2.zip"
+MASKS_OBJECT_NAME = "masks_refined_v2.zip"
 
 
 s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))

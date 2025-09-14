@@ -9,7 +9,7 @@ from keras.preprocessing.image import img_to_array, load_img
 from matplotlib import pyplot as plt
 from matplotlib.colors import ListedColormap, to_rgb
 
-from seg_tgce.data.crowd_seg.__retrieve import (
+from seg_tgce.data.crowd_seg._retrieve import (
     _BUCKET_NAME,
     MASKS_OBJECT_NAME,
     PATCHES_OBJECT_NAME,
@@ -20,12 +20,9 @@ logging.basicConfig(level=logging.WARNING)
 
 
 CLASSES_DEFINITION = {
-    0: "Ignore",
-    1: "Other",
-    2: "Tumor",
-    3: "Stroma",
-    4: "B. Inflammation",  # Benign Inflammation
-    5: "Necrosis",
+    0: "Other",
+    1: "Tumor",
+    2: "Stroma",
 }
 
 REAL_SCORERS = [
@@ -151,8 +148,9 @@ def map_sample(sample: SampleData, image_size: tuple[int, int]) -> ProcessedSamp
 class CrowdSegDataset(tfds.core.GeneratorBasedBuilder):
     """DatasetBuilder for crowd segmentation dataset."""
 
-    VERSION = tfds.core.Version("1.0.0")
+    VERSION = tfds.core.Version("1.1.0")
     RELEASE_NOTES = {
+        "1.1.0": "Use further refined patches and masks",
         "1.0.0": "Initial release.",
     }
 
@@ -184,8 +182,8 @@ class CrowdSegDataset(tfds.core.GeneratorBasedBuilder):
                 }
             ),
             supervised_keys=("image", "masks"),
-            homepage="https://github.com/your-repo/crowd-seg",
-            citation="""@article{your-citation}""",
+            homepage="https://github.com/blotero/seg_tgce",
+            # citation="""@article{your-citation}""",
         )
 
     def _split_generators(
@@ -559,7 +557,7 @@ def print_sample_info(data: dict) -> None:
     print("-" * 50)
 
 
-def main_processed() -> None:
+def main() -> None:
     target_size = (128, 128)
     batch_size = 16
 
@@ -568,26 +566,15 @@ def main_processed() -> None:
     )
     print(f"Dataset train length: {len(train)}")
 
-    fig = visualize_sample(
+    _ = visualize_sample(
         validation,
         target_size,
         batch_index=1,
         sample_indexes=[0, 1, 3, 4],
         sparse_labelers=False,
     )
-    fig.savefig(
-        "/home/brandon/unal/maestria/master_thesis/Cap1/Figures/multiannotator-segmentation.png"
-    )
-
-
-def main_raw():
-    train, validation, test = get_crowd_seg_dataset_tfds(
-        image_size=(64, 64),
-    )
-    for i, data in enumerate(train):
-        print(f"\nSample {i}:")
-        print_sample_info(data)
+    plt.show()
 
 
 if __name__ == "__main__":
-    main_processed()
+    main()

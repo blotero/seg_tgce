@@ -11,8 +11,8 @@ from seg_tgce.models.ma_model import BaselineVisualizationCallback
 
 from ..utils import handle_training
 
-TARGET_SHAPE = (256, 256)
-BATCH_SIZE = 32
+TARGET_SHAPE = (128, 128)
+BATCH_SIZE = 16
 TRAIN_EPOCHS = 20
 TUNER_EPOCHS = 2
 MAX_TRIALS = 5
